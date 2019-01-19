@@ -23,6 +23,8 @@ app.use(session({
 	saveUninitialized: true
 }));
 
+var auth = require('./auth.js').init(app, passport);	// include auth file
+
 // start server
 var server = app.listen(8080, function() {
 	console.log('Intensives server listening on port %d', server.address().port);
