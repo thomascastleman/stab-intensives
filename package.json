@@ -1,0 +1,27 @@
+{
+  "name": "stab-intensives",
+  "version": "1.0.0",
+  "description": "A system to handle the assignment of St. Anne's-Belfield students to intensives courses",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/thomascastleman/stab-intensives.git"
+  },
+  "author": "Thomas Castleman & Johnny Lindbergh",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/thomascastleman/stab-intensives/issues"
+  },
+  "homepage": "https://github.com/thomascastleman/stab-intensives#readme",
+  "dependencies": {
+    "body-parser": "^1.18.3",
+    "cookie-parser": "^1.4.3",
+    "cookie-session": "^2.0.0-beta.3",
+    "express": "^4.16.4",
+    "mustache-express": "^1.2.8",
+    "passport": "^0.4.0"
+  }
+}
