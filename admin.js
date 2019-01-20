@@ -145,14 +145,22 @@ module.exports = {
 		app.post('/createIntensive', auth.isAdmin, function(req, res) {
 			// if fields all exist
 			if (req.body.name !== '' && req.body.maxCapacity !== '' && req.body.minGrade !== '' && req.body.minAge !== '') {
-				// insert intensive into database
-				con.query('INSERT INTO intensives (name, maxCapacity, minGrade, minAge) VALUES (?, ?, ?, ?);', [req.body.name, req.body.maxCapacity, req.body.minGrade, req.body.minAge], function(err) {
-					if (!err) {
-						res.redirect('/admin');
-					} else {
-						res.render('error.html', { message: "There was an error adding the intensive to the database." });
-					}
-				});
+
+				var capacity = parseInt(req.body.maxCapacity, 10);
+
+				// check that admin has entered legitimate capacity
+				if (capacity != NaN && capacity > 0) {
+					// insert intensive into database
+					con.query('INSERT INTO intensives (name, maxCapacity, minGrade, minAge) VALUES (?, ?, ?, ?);', [req.body.name, req.body.maxCapacity, req.body.minGrade, req.body.minAge], function(err) {
+						if (!err) {
+							res.redirect('/admin');
+						} else {
+							res.render('error.html', { message: "There was an error adding the intensive to the database." });
+						}
+					});
+				} else {
+					res.render('error.html', { message: "Invalid maximum capacity: " + req.body.maxCapacity });
+				}
 			} else {
 				res.render('error.html', { message: "All fields must be filled in to create an intensive." });
 			}
