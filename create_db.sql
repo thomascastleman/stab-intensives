@@ -65,6 +65,10 @@ CREATE TABLE system (
 INSERT INTO system (name, value) VALUES ("numChoices", "5"), ("prioritizeByGrade", "0");
 
 
+
+
+
+-- DEBUG -----------------------------
 INSERT INTO intensives (name, maxCapacity) VALUES ("Art of Argument", 25);
 INSERT INTO students (name, email, age, grade) VALUES ("Thomas C", "thomas@gmail.com", 10, 12);
 INSERT INTO admins (name, email) VALUES ("Mr. Quagliaroli", "pquagliarolipoli@stab.org");
