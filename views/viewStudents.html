@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>View Student Data</title>
+</head>
+<body>
+	<a href="/admin">Back to Administrator Portal</a><br>
+	<h1>Student Data</h1>
+	{{^studentsExist}}
+		<p>There are no students in the system.</p>
+	{{/studentsExist}}
+	{{#studentsExist}}
+		{{#lastUpdate}}<h3>Last Updated {{lastUpdate}}</h3>{{/lastUpdate}}
+		<table>
+			<tr>
+				<th>Name</th>
+				<th>Email</th>
+				<th>Grade</th>
+				<th>Age</th>
+			</tr>
+			{{#students}}
+			<tr>
+				<td>{{name}}</td>
+				<td>{{email}}</td>
+				<td>{{grade}}</td>
+				<td>{{age}}</td>
+			</tr>
+			{{/students}}
+		</table>
+	{{/studentsExist}}
+</body>
+</html>

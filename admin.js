@@ -2,6 +2,7 @@
 var con = require('./database.js').connection;
 var auth = require('./auth.js');
 var creds = require('./credentials.js');
+var moment = require('moment');
 const http = require('http');
 const fs = require('fs');
 const multer = require('multer');
@@ -12,7 +13,7 @@ module.exports = {
 	// set up admin routes
 	init: function(app) {
 		// on upload of a student CSV file
-		app.post('/uploadStudentCSV', upload.single('file'), auth.isAdmin, function (req, res) {
+		app.post('/uploadStudentCSV', upload.single('file'), function(req, res) { // auth.isAdmin, function (req, res) {
 		  const fileRows = [];
 
 		  // open uploaded file
@@ -34,7 +35,17 @@ module.exports = {
 						// batch insert student data into students table
 						con.query('INSERT INTO students (name, email, age, grade) VALUES ?;', [fileRows], function(err) {
 							if (!err) {
-								res.redirect('/admin');
+								// record current time
+								var now = moment().format('MMMM Do YYYY, h:mm a');
+
+								// set last update on student CSV to current time
+								con.query('UPDATE system SET value = ? WHERE name = ?;', [now, 'studentCSVLastUpdate'], function(err) {
+									if (!err) {
+										res.redirect('/admin');
+									} else {
+										res.render('error.html', { message: "Failed to register time of last update." });
+									}
+								});
 							} else {
 								res.render('error.html', { message: "Failed to upload students to database." });
 							}
@@ -94,7 +105,7 @@ module.exports = {
 					render.intensivesExist = rows.length > 0;
 
 					// get the system variables
-					module.exports.getSystemVariables(function(err, vars) {
+					module.exports.getAllSystemVars(function(err, vars) {
 						if (!err) {
 							// add system variables to render object
 							render.variables = vars;
@@ -244,6 +255,33 @@ module.exports = {
 			}
 		});
 
+		// allow admin to view table of all students who currently exist in system
+		app.get('/viewStudents', auth.restrictAdmin, function(req, res) {
+			var render = {};
+
+			// get all data from students table
+			con.query('SELECT * FROM students;', function(err, rows) {
+				if (!err && rows !== undefined) {
+					// register student data and existence of students in render object
+					render.students = rows;
+					render.studentsExist = rows.length > 0;
+
+					// get the time of last update of the student CSV file
+					module.exports.getOneSystemVar('studentCSVLastUpdate', function(err, value) {
+						if (!err) {
+							// add last update date to page (assume already formatted)
+							render.lastUpdate = value;
+						}
+
+						// render page with student info
+						res.render('viewStudents.html', render);
+					});
+				} else {
+					res.render('error.html', { message: "Failed to retrieve student data." });
+				}
+			});
+		});
+
 	},
 
 	// change the numChoices variable to reflect a change in the number of intensives available
@@ -283,24 +321,42 @@ module.exports = {
 	},
 
 	// pull system variables from db and convert them into their proper format (int, boolean, date, etc)
-	getSystemVariables: function(callback) {
+	getAllSystemVars: function(callback) {
 		var variables = {};
 		// get system variables from db
 		con.query('SELECT * FROM system;', function(err, rows) {
 			if (!err && rows !== undefined && rows.length > 0) {
 				// for each system variable
 				for (var i = 0; i < rows.length; i++) {
-					if (rows[i].type == 'BOOL')
+					if (rows[i].type == 'BOOL') {
 						// cast to boolean
 						variables[rows[i].name] = rows[i].value == '1' ? true : false;
-					else if (rows[i].type == 'INT')
+					} else if (rows[i].type == 'INT') {
 						// cast to integer
 						variables[rows[i].name] = parseInt(rows[i].value, 10);
+					} else {
+						// use default string value
+						variables[rows[i].name] = rows[i].value;
+					}
 				}
 			}
 
 			// callback on retrieved data
 			callback(err, variables);
 		});
+	},
+
+	// get the string value of a system variable, given its name
+	getOneSystemVar: function(name, callback) {
+		// get everything under this system variable name
+		con.query('SELECT * FROM system WHERE name = ?;', [name], function(err, rows) {
+			if (!err && rows !== undefined && rows.length > 0) {
+				// callback on the value
+				callback(err, rows[0].value);
+			} else {
+				callback(err, null);
+			}
+		});
 	}
+
 }
