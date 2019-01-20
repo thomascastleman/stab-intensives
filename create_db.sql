@@ -58,11 +58,12 @@ CREATE TABLE system (
 	uid INT NOT NULL AUTO_INCREMENT,
 	name VARCHAR(32),
 	value VARCHAR(16),
+	type VARCHAR(16),
 	PRIMARY KEY (uid)
 );
 
 -- insert defaults for system: 5 choices and no grade priority
-INSERT INTO system (name, value) VALUES ("numChoices", "5"), ("prioritizeByGrade", "0"), ("signUpsAvailable", "0");
+INSERT INTO system (name, value, type) VALUES ("numChoices", "3", "INT"), ("prioritizeByGrade", "0", "BOOL"), ("signUpsAvailable", "0", "BOOL");
 
 
 

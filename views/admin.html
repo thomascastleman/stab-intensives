@@ -2,8 +2,86 @@
 <html>
 <head>
 	<title>Administrator Portal</title>
+
+	<script>
+		function removeIntensive(uid) {
+			console.log(uid);
+		}
+	</script>
 </head>
 <body>
-	<p>Adminz</p>
+	<h1>Administrator Portal</h1>
+
+	<h3>Intensives</h3>
+	<button>Upload Intensives CSV</button>
+	<table>
+		<tr>
+			<th>Name</th>
+			<th>Capacity</th>
+			<th>Minimum Grade</th>
+			<th>Minimum Age</th>
+		</tr>
+		{{#intensives}}
+		<tr>
+			<td>{{name}}</td>
+			<td>{{maxCapacity}}</td>
+			<td>{{minGrade}}</td>
+			<td>{{minAge}}</td>
+			<td><button onclick="removeIntensive({{uid}});">Delete</button></td>
+		</tr>
+		{{/intensives}}
+		<form action="/createIntensive" method="POST">
+			<tr>
+				<td><input name="name" type="text" autocomplete="off" placeholder="Enter Name"></td>
+				<td><input name="maxCapacity" type="text" autocomplete="off" placeholder="Enter Max Capacity"></td>
+				<td><input name="minGrade" type="text" autocomplete="off" placeholder="Enter Min Grade"></td>
+				<td><input name="minAge" type="text" autocomplete="off" placeholder="Enter Min Age"></td>
+				<td><button type="submit">Add</button></td>
+			</tr>
+		</form>
+	</table>
+
+	{{^variables.signUpsAvailable}}
+
+	<h3>Students</h3>
+	<button>Upload Student CSV</button>
+	{{#studentCSVLastUpdate}}<a href="/studentCSV">View Last Update ({{studentCSVLastUpdate}})</a>{{/studentCSVLastUpdate}}
+	<br>
+
+
+	{{#intensivesExist}}
+	Students can select top 
+	<select>
+		{{#choiceNumbers}}
+		<option value="{{n}}" {{#selected}}selected{{/selected}}>{{n}}</option>
+		{{/choiceNumbers}}
+	</select>
+	intensives.<br>
+
+	<button>Release Sign Up</button>
+	<br>
+	{{/intensivesExist}}
+	{{^intensivesExist}}
+	<p>There must be intensives in the system before the student sign-up can be released. Consider adding an intensive above.</p>
+	{{/intensivesExist}}
+
+	{{/variables.signUpsAvailable}}
+	{{#variables.signUpsAvailable}}
+
+	<h3>Student Sign Up Progress</h3>
+
+	{{/variables.signUpsAvailable}}
+
+	<h3>Matching</h3>
+	{{#intensivesExist}}
+	<a href="/match">Generate Matchings</a>
+	{{/intensivesExist}}
+	{{^intensivesExist}}
+	There must be intensives in the system before a matching can be generated.
+	{{/intensivesExist}}
+
+	<h3>Clear Intensive / Student Data</h3>
+	<a href="/wipeAllData">Reset All Data</a>
+
 </body>
 </html>

@@ -35,7 +35,7 @@ var server = app.listen(8080, function() {
 	console.log('Intensives server listening on port %d', server.address().port);
 });
 
-// fallback redirection to landing page
-app.get('*', function(req, res) {
-	res.redirect('/');
-});
+// // fallback redirection to landing page
+// app.get('*', function(req, res) {
+// 	res.redirect('/');
+// });

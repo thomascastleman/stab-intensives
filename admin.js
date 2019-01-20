@@ -47,7 +47,37 @@ module.exports = {
 
 		// render admin portal
 		app.get('/admin', auth.restrictAdmin, function(req, res) {
-			res.render('admin.html');
+			var render = {};
+
+			// get all intensives recorded in db
+			con.query('SELECT * FROM intensives;', function(err, rows) {
+				if (!err && rows !== undefined) {
+					// add intensives info to render object
+					render.intensives = rows;
+					render.intensivesExist = rows.length > 0;
+
+					// get the system variables
+					module.exports.getSystemVariables(function(err, vars) {
+						if (!err) {
+							// add system variables to render object
+							render.variables = vars;
+
+							// get list of possible states for numChoices variable
+							render.choiceNumbers = [];
+							for (var i = 1; i <= render.intensives.length; i++) {
+								render.choiceNumbers.push({ n: i, selected: i == render.variables.numChoices });
+							}
+
+							// render admin portal
+							res.render('admin.html', render);
+						} else {
+							res.render('error.html', { message: "Unable to retrieve system parameters." });
+						}
+					});
+				} else {
+					res.render('error.html', { message: "Unable to gather intensives info." });
+				}
+			});
 		});
 
 		// add a new intensive to database
@@ -93,6 +123,8 @@ module.exports = {
 							// if an error occurred, render an error message
 							if (suc || succ || succc || succcc) {
 								res.render("error.html", {message: "Failure to delete something :("});
+							} else {
+								res.redirect('/admin');
 							}
 						});		
 					});	
@@ -151,5 +183,27 @@ module.exports = {
 			}
 		});
 
+	},
+
+	// pull system variables from db and convert them into their proper format (int, boolean, date, etc)
+	getSystemVariables: function(callback) {
+		var variables = {};
+		// get system variables from db
+		con.query('SELECT * FROM system;', function(err, rows) {
+			if (!err && rows !== undefined && rows.length > 0) {
+				// for each system variable
+				for (var i = 0; i < rows.length; i++) {
+					if (rows[i].type == 'BOOL')
+						// cast to boolean
+						variables[rows[i].name] = rows[i].value == '1' ? true : false;
+					else if (rows[i].type == 'INT')
+						// cast to integer
+						variables[rows[i].name] = parseInt(rows[i].value, 10);
+				}
+			}
+
+			// callback on retrieved data
+			callback(err, variables);
+		});
 	}
 }
