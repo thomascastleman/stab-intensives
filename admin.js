@@ -74,12 +74,36 @@ module.exports = {
 
 		// change whether or not grade is factored into matching
 		app.post('/prioritizeGrade', auth.isAdmin, function(req, res) {
-
+			// if field is not null
+			if (req.body.prioritizeGrade !== null) {
+				// update system variable
+				con.query('UPDATE system SET value = ? WHERE name = ?;', [req.body.prioritizeGrade, "prioritizeGrade"], function(err) {
+					if (!err) {
+						res.redirect('/admin');
+					} else {
+						res.render('error.html', { message: "Unable to update use of grade priority." });
+					}
+				});
+			} else {
+				res.render('error.html', { message: "Unable to use of grade priority due to null field."})
+			}
 		});
 
 		// change whether sign ups are open or closed
 		app.post('/changeSignUpRelease', auth.isAdmin, function(req, res) {
-
+			// if field is not null
+			if (req.body.signUpsAvailable !== null) {
+				// update system variable
+				con.query('UPDATE system SET value = ? WHERE name = ?;', [req.body.signUpsAvailable, "signUpsAvailable"], function(err) {
+					if (!err) {
+						res.redirect('/admin');
+					} else {
+						res.render('error.html', { message: "Unable to update status of sign ups." });
+					}
+				});
+			} else {
+				res.render('error.html', { message: "Unable to update status of sign ups due to null field."})
+			}
 		});
 
 	}
