@@ -12,11 +12,26 @@ module.exports = {
 
 	// set up routes and configure authentication settings
 	init: function(app, passport) {
-
 		// cache user info from our system into their session
 		passport.serializeUser(function(user, done) {
-			console.log(user);
-			done(null, user);
+			// check for user in students table
+			con.query('SELECT * FROM students WHERE email = ?;', [user.email], function(err, rows) {
+				if (!err && rows !== undefined && rows.length > 0) {
+					user.local = rows[0];
+					done(null, user);
+				} else {
+					// if failure, check for user in admins table
+					con.query('SELECT * FROM admins WHERE email = ?;', [user.email], function(err, rows) {
+						if (!err && rows !== undefined && rows.length > 0) {
+							user.local = rows[0];
+							user.local.isAdmin = true;
+							done(null, user);
+						} else {
+							done("Your account does not exist.", null);
+						}
+					});
+				}
+			});
 		});
 
 		passport.deserializeUser(function(user, done) {
