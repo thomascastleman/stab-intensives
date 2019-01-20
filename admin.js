@@ -46,6 +46,41 @@ module.exports = {
 		    });
 		});
 
+		// on upload of an intensives CSV file
+		app.post('/uploadIntensiveCSV', upload.single('file'), auth.isAdmin, function (req, res) {
+		  const fileRows = [];
+
+		  // open uploaded file
+		  csv.fromPath(req.file.path)
+		    .on("data", function (data) {
+		    	// push each row
+				fileRows.push(data);
+		    })
+		    .on("end", function () {
+		    	// remove temp file
+				fs.unlinkSync(req.file.path);
+
+				// remove the header of the CSV file
+				fileRows.shift();
+
+				// ensure intensives table is clear
+				con.query('DELETE FROM intensives;', function(err) {
+					if (!err) {
+						// batch insert intensive data into intensives table
+						con.query('INSERT INTO intensives (name, maxCapacity, minGrade, minAge) VALUES ?;', [fileRows], function(err) {
+							if (!err) {
+								res.redirect('/admin');
+							} else {
+								res.render('error.html', { message: "Failed to upload intensives to database." });
+							}
+						});
+					} else {
+						res.render('error.html', { message: "Failed to clear existing record of intensives." });
+					}
+				});
+		    });
+		});
+
 		// render admin portal
 		app.get('/admin', auth.restrictAdmin, function(req, res) {
 			var render = { domain: creds.domain };
