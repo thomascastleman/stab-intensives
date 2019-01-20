@@ -65,12 +65,3 @@ CREATE TABLE system (
 
 -- insert defaults for system: 5 choices and no grade priority
 INSERT INTO system (name, value, type) VALUES ("numChoices", "3", "INT"), ("prioritizeByGrade", "0", "BOOL"), ("signUpsAvailable", "0", "BOOL");
-
-
-
--- DEBUG -----------------------------
-INSERT INTO intensives (name, maxCapacity) VALUES ("Art of Argument", 25);
-INSERT INTO students (name, email, age, grade) VALUES ("Thomas C", "thomas@gmail.com", 10, 12);
-INSERT INTO admins (name, email) VALUES ("Mr. Quagliaroli", "pquagliarolipoli@stab.org");
-INSERT INTO matching (studentUID, intensiveUID) VALUES (1, 1);
-INSERT INTO preferences (studentUID, intensiveUID, choice) VALUES (1, 1, 3);
