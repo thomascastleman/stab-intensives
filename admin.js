@@ -13,7 +13,7 @@ module.exports = {
 	// set up admin routes
 	init: function(app) {
 		// on upload of a student CSV file
-		app.post('/uploadStudentCSV', upload.single('file'), function(req, res) { // auth.isAdmin, function (req, res) {
+		app.post('/uploadStudentCSV', upload.single('file'), auth.isAdmin, function(req, res) { // auth.isAdmin, function (req, res) {
 		  const fileRows = [];
 
 		  // open uploaded file
@@ -247,11 +247,11 @@ module.exports = {
 					if (!err) {
 						res.redirect('/admin');
 					} else {
-						res.render('error.html', { message: "Unable to update status of sign ups." });
+						res.render('error.html', { message: "Unable to update status of sign-ups." });
 					}
 				});
 			} else {
-				res.render('error.html', { message: "Unable to update status of sign ups due to null field."})
+				res.render('error.html', { message: "Unable to update status of sign-ups due to null field."})
 			}
 		});
 

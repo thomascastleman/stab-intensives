@@ -42,7 +42,12 @@
 	<h1>Administrator Portal</h1>
 
 	<h3>Intensives</h3>
-	<button>Upload Intensives CSV</button>
+	{{#variables.signUpsAvailable}}
+		<p>While student sign-ups are live, you can only <strong>add</strong> new intensives. To delete an intensive or replace the existing intensive data with a new CSV upload, first close the sign-up.</p>
+	{{/variables.signUpsAvailable}}
+	{{^variables.signUpsAvailable}}
+		<button>Upload Intensives CSV</button>
+	{{/variables.signUpsAvailable}}
 	<table>
 		<tr>
 			<th>Name</th>
@@ -56,7 +61,9 @@
 			<td>{{maxCapacity}}</td>
 			<td>{{minGrade}}</td>
 			<td>{{minAge}}</td>
-			<td><button onclick="removeIntensive({{uid}}, '{{name}}');">Delete</button></td>
+			{{^variables.signUpsAvailable}}
+				<td><button onclick="removeIntensive({{uid}}, '{{name}}');">Delete</button></td>
+			{{/variables.signUpsAvailable}}
 		</tr>
 		{{/intensives}}
 		<form action="/createIntensive" method="POST">
@@ -94,7 +101,6 @@
 		{{#variables.studentCSVLastUpdate}}<a href="/viewStudents">View Last Update ({{variables.studentCSVLastUpdate}})</a>{{/variables.studentCSVLastUpdate}}
 		<br>
 
-
 		{{#intensivesExist}}
 			<form action="/changeNumChoices" method="POST">
 				Students can select top 
@@ -106,10 +112,15 @@
 				intensives.<br>
 			</form>
 
-			<form action="/changeSignUpRelease" method="POST">
-				<input name="signUpsAvailable" value="1" hidden>
-				<button type="submit" onclick="return confirm('Are you sure you want to release the student sign-up form?');">Release Sign-Up</button><br>
-			</form>
+			{{#variables.studentCSVLastUpdate}}
+				<form action="/changeSignUpRelease" method="POST">
+					<input name="signUpsAvailable" value="1" hidden>
+					<button type="submit" onclick="return confirm('Are you sure you want to release the student sign-up form?');">Release Sign-Up</button><br>
+				</form>
+			{{/variables.studentCSVLastUpdate}}
+			{{^variables.studentCSVLastUpdate}}
+				<p>There must be students in the system before the student sign-up can be released. Consider uploading a student CSV file.</p>
+			{{/variables.studentCSVLastUpdate}}
 		{{/intensivesExist}}
 
 		{{^intensivesExist}}
@@ -146,15 +157,26 @@
 	{{/variables.signUpsAvailable}}
 
 	<h3>Matching</h3>
-	{{#intensivesExist}}
-		<a href="/match">Generate Matchings</a>
-	{{/intensivesExist}}
-	{{^intensivesExist}}
-		There must be intensives in the system before a matching can be generated.
-	{{/intensivesExist}}
+	{{^variables.signUpsAvailable}}
+		{{#intensivesExist}}
+			<a href="/match">Generate Matchings</a>
+		{{/intensivesExist}}
+		{{^intensivesExist}}
+			There must be intensives in the system before a matching can be generated.
+		{{/intensivesExist}}
+	{{/variables.signUpsAvailable}}
+
+	{{#variables.signUpsAvailable}}
+		<p>You must close the student sign-up before generating a matching.</p>
+	{{/variables.signUpsAvailable}}
 
 	<h3>Clear Intensive / Student Data</h3>
-	<a href="/wipeAllData" onclick="return confirm('Are you sure you want to erase all student and intensive data?');">Reset All Data</a>
+	{{^variables.signUpsAvailable}}
+		<a href="/wipeAllData" onclick="return confirm('Are you sure you want to erase all student and intensive data?');">Reset All Data</a>
+	{{/variables.signUpsAvailable}}
 
+	{{#variables.signUpsAvailable}}
+		<p>You must close the student sign-up before erasing all data.</p>
+	{{/variables.signUpsAvailable}}
 </body>
 </html>
