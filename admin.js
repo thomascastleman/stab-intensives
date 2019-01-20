@@ -90,6 +90,7 @@ module.exports = {
 				if (!err && rows !== undefined) {
 					// add intensives info to render object
 					render.intensives = rows;
+					render.numIntensives = rows.length;
 					render.intensivesExist = rows.length > 0;
 
 					// get the system variables
@@ -229,7 +230,7 @@ module.exports = {
 		// change whether sign ups are open or closed
 		app.post('/changeSignUpRelease', auth.isAdmin, function(req, res) {
 			// if field is not null
-			if (req.body.signUpsAvailable !== null) {
+			if (req.body.signUpsAvailable !== '') {
 				// update system variable
 				con.query('UPDATE system SET value = ? WHERE name = ?;', [req.body.signUpsAvailable, "signUpsAvailable"], function(err) {
 					if (!err) {

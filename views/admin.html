@@ -4,19 +4,24 @@
 	<title>Administrator Portal</title>
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js"></script>
 	<script>
+		// track number of intensives in table
+		var numIntensives = {{numIntensives}};
+
 		// remove an intensive by UID
 		function removeIntensive(uid, name) {
 			if (confirm("Are you sure you want to remove the intensive '" + name + "'?")) {
 				$.post('/deleteIntensive', { uid: uid })
 					.done(function(data) {
 						// if no error, remove intensive table element
-						if (!data.err)
+						if (!data.err) {
 							$('#intensive' + uid).remove();
-						else
+							numIntensives--;
+						} else {
 							alert("Failed to remove intensive.");
+						}
 
 						// if number of student choices has been forcibly updated, reload page to show changes
-						if (data.numChoices)
+						if (data.numChoices || numIntensives < 1)
 							window.location.href = "/admin";	// reload page
 					});
 			}
@@ -74,61 +79,66 @@
 
 	{{^variables.signUpsAvailable}}
 
-	<h3>Students</h3>
-	<button>Upload Student CSV</button>
-	{{#studentCSVLastUpdate}}<a href="/studentCSV">View Last Update ({{studentCSVLastUpdate}})</a>{{/studentCSVLastUpdate}}
-	<br>
+		<h3>Students</h3>
+		<button>Upload Student CSV</button>
+		{{#studentCSVLastUpdate}}<a href="/studentCSV">View Last Update ({{studentCSVLastUpdate}})</a>{{/studentCSVLastUpdate}}
+		<br>
 
 
-	{{#intensivesExist}}
-	Students can select top 
-	<select>
-		{{#choiceNumbers}}
-		<option value="{{n}}" {{#selected}}selected{{/selected}}>{{n}}</option>
-		{{/choiceNumbers}}
-	</select>
-	intensives.<br>
+		{{#intensivesExist}}
+			Students can select top 
+			<select>
+				{{#choiceNumbers}}
+				<option value="{{n}}" {{#selected}}selected{{/selected}}>{{n}}</option>
+				{{/choiceNumbers}}
+			</select>
+			intensives.<br>
 
-	<button>Release Sign-Up</button>
-	<br>
-	{{/intensivesExist}}
+			<form action="/changeSignUpRelease" method="POST">
+				<input name="signUpsAvailable" value="1" hidden>
+				<button type="submit" onclick="return confirm('Are you sure you want to release the student sign-up form?');">Release Sign-Up</button><br>
+			</form>
+		{{/intensivesExist}}
 
-	{{^intensivesExist}}
-	<p>There must be intensives in the system before the student sign-up can be released. Consider adding an intensive above.</p>
-	{{/intensivesExist}}
+		{{^intensivesExist}}
+			<p>There must be intensives in the system before the student sign-up can be released. Consider adding an intensive above.</p>
+		{{/intensivesExist}}
 
 	{{/variables.signUpsAvailable}}
+
 	{{#variables.signUpsAvailable}}
 
-	<h3>Student Sign-Up Progress</h3>
+		<h3>Student Sign-Up Progress</h3>
+		<p>The student sign-up is live at <strong>{{domain}}/signup</strong></p>
+		
+		<form action="/changeSignUpRelease" method="POST">
+			<input name="signUpsAvailable" value="0" hidden>
+			<button type="submit" onclick="return confirm('Are you sure you want to close the student sign-up form? You may re-open it later.');">Close Sign-Up</button><br>
+		</form>
 
-	<p>The student sign-up is live at <strong>{{domain}}/signup</strong></p>
-
-	<button>Close Sign-Up</button>
-
-	<table>
-		<tr>
-			<th>Student</th>
-			<th>Last Sign-Up Date</th>
-			<th>Sign-Up Status</th>
-		</tr>
-		{{#students}}
-		<tr>
-			<td>{{name}}</td>
-			<td>{{lastSignUp}}</td>
-			<td>{{signUpStatus}}</td>
-		</tr>
-		{{/students}}
-	</table>
+		<table>
+			<tr>
+				<th>Student</th>
+				<th>Last Sign-Up Date</th>
+				<th>Sign-Up Status</th>
+			</tr>
+			{{#students}}
+			<tr>
+				<td>{{name}}</td>
+				<td>{{lastSignUp}}</td>
+				<td>{{signUpStatus}}</td>
+			</tr>
+			{{/students}}
+		</table>
 
 	{{/variables.signUpsAvailable}}
 
 	<h3>Matching</h3>
 	{{#intensivesExist}}
-	<a href="/match">Generate Matchings</a>
+		<a href="/match">Generate Matchings</a>
 	{{/intensivesExist}}
 	{{^intensivesExist}}
-	There must be intensives in the system before a matching can be generated.
+		There must be intensives in the system before a matching can be generated.
 	{{/intensivesExist}}
 
 	<h3>Clear Intensive / Student Data</h3>
