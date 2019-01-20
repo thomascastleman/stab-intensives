@@ -71,6 +71,7 @@ module.exports = {
 
 							// if sign ups are out
 							if (render.variables.signUpsAvailable) {
+								// get sign up info of every registered student
 								con.query('SELECT name, lastSignUp, lastSignUp IS NOT NULL AS signUpStatus FROM students;', function(err, rows) {
 									if (!err && rows !== undefined && rows.length > 0) {
 										render.students = rows;
@@ -80,6 +81,7 @@ module.exports = {
 									res.render('admin.html', render);
 								});
 							} else {
+								// render admin portal without signup info
 								res.render('admin.html', render);
 							}
 						} else {
@@ -133,17 +135,24 @@ module.exports = {
 		});
 
 		// wipe tables in database that pertain to a specific matching
-		app.get('/wipeAllData', auth.restrictAdmin, function(req, res){
-			con.query("DELETE FROM matching;", function(suc){
-				con.query("DELETE FROM preferences;", function(succ){
-					con.query("DELETE FROM students;", function(succc){
-						con.query("DELETE FROM intensives;", function(succcc){
-							// if an error occurred, render an error message
-							if (suc || succ || succc || succcc) {
-								res.render("error.html", {message: "Failure to delete something :("});
-							} else {
-								res.redirect('/admin');
-							}
+		app.get('/wipeAllData', auth.restrictAdmin, function(req, res) {
+			// remove matching info
+			con.query("DELETE FROM matching;", function(suc) {
+				// remove gathered student preferences
+				con.query("DELETE FROM preferences;", function(succ) {
+					// remove all student data
+					con.query("DELETE FROM students;", function(succc) {
+						// remove all intensives data
+						con.query("DELETE FROM intensives;", function(succcc) {
+							// check if numChoices variable needs to be updated (it likely does now that everything's gone)
+							module.exports.updateNumChoicesSystemVar(function(err) {
+								// if an error occurred, render an error message
+								if (suc || succ || succc || succcc || err) {
+									res.render("error.html", {message: "Failed to remove all data."});
+								} else {
+									res.redirect('/admin');
+								}
+							});
 						});		
 					});	
 				});
