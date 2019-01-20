@@ -37,8 +37,8 @@ CREATE TABLE matching (
 	uid INT NOT NULL AUTO_INCREMENT,
 	studentUID INT,
 	intensiveUID INT,
-	FOREIGN KEY (studentUID) REFERENCES students(uid),
-	FOREIGN KEY (intensiveUID) REFERENCES intensives(uid),
+	FOREIGN KEY (studentUID) REFERENCES students(uid) ON DELETE CASCADE,
+	FOREIGN KEY (intensiveUID) REFERENCES intensives(uid) ON DELETE CASCADE,
 	PRIMARY KEY (uid)
 );
 
@@ -48,8 +48,8 @@ CREATE TABLE preferences (
 	studentUID INT,
 	intensiveUID INT,
 	choice INT,
-	FOREIGN KEY (studentUID) REFERENCES students(uid),
-	FOREIGN KEY (intensiveUID) REFERENCES intensives(uid),
+	FOREIGN KEY (studentUID) REFERENCES students(uid) ON DELETE CASCADE,
+	FOREIGN KEY (intensiveUID) REFERENCES intensives(uid) ON DELETE CASCADE,
 	PRIMARY KEY (uid)
 );
 
