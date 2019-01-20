@@ -51,7 +51,7 @@ module.exports = {
 			var render = { domain: creds.domain };
 
 			// get all intensives recorded in db
-			con.query('SELECT name, maxCapacity, IF(minGrade = 9, "None", minGrade) AS minGrade, IF(minAge = 0, "None", minAge) AS minAge FROM intensives;', function(err, rows) {
+			con.query('SELECT uid, name, maxCapacity, IF(minGrade = 9, "None", minGrade) AS minGrade, IF(minAge = 0, "None", minAge) AS minAge FROM intensives;', function(err, rows) {
 				if (!err && rows !== undefined) {
 					// add intensives info to render object
 					render.intensives = rows;
@@ -97,7 +97,7 @@ module.exports = {
 		// add a new intensive to database
 		app.post('/createIntensive', auth.isAdmin, function(req, res) {
 			// if fields all exist
-			if (req.body.name !== null && req.body.maxCapacity !== null && req.body.minGrade !== null && req.body.minAge !== null) {
+			if (req.body.name !== '' && req.body.maxCapacity !== '' && req.body.minGrade !== '' && req.body.minAge !== '') {
 				// insert intensive into database
 				con.query('INSERT INTO intensives (name, maxCapacity, minGrade, minAge) VALUES (?, ?, ?, ?);', [req.body.name, req.body.maxCapacity, req.body.minGrade, req.body.minAge], function(err) {
 					if (!err) {
@@ -119,18 +119,16 @@ module.exports = {
 				con.query('DELETE FROM intensives WHERE uid = ?;', [req.body.uid], function(err) {
 					if (!err) {
 						// update numChoices sys variable if necessary
-						module.exports.updateNumChoicesSystemVar(function(err) {
-							if (!err)
-								res.redirect('/admin');
-							else
-								res.render('error.html', { message: "There was an error updating the number of student choices." });
+						module.exports.updateNumChoicesSystemVar(function(numChoices, err) {
+							// callback with new number of choices, and error if thrown
+							res.send({ numChoices: numChoices, err: err });
 						});
 					} else {
-						res.render('error.html', { message: "There was an error deleting this intensive." });
+						res.send({ err: err });
 					}
 				});
 			} else {
-				res.render('error.html', { message: "Unable to delete intensive due to a null field." });
+				res.send({ err: err });
 			}
 		});
 
@@ -145,7 +143,7 @@ module.exports = {
 						// remove all intensives data
 						con.query("DELETE FROM intensives;", function(succcc) {
 							// check if numChoices variable needs to be updated (it likely does now that everything's gone)
-							module.exports.updateNumChoicesSystemVar(function(err) {
+							module.exports.updateNumChoicesSystemVar(function(numChoices, err) {
 								// if an error occurred, render an error message
 								if (suc || succ || succc || succcc || err) {
 									res.render("error.html", {message: "Failed to remove all data."});
@@ -224,20 +222,26 @@ module.exports = {
 				con.query('SELECT COUNT(*) AS numIntensives FROM intensives;', function(err, rows) {
 					if (!err && rows !== undefined && rows.length > 0) {
 						// if the number of choices is more than the number of intensives available
-						if (numChoices > rows[0].numIntensives) {
+						if (numChoices > rows[0].numIntensives || numChoices == 0) {
 							// update numChoices to be number of intensives
 							con.query('UPDATE system SET value = ? WHERE name = ?;', [rows[0].numIntensives, 'numChoices'], function(err) {
-								callback(err);
+								if (err)
+									callback(numChoices, err);	// callback with same numChoices and the error thrown
+								else
+									callback(rows[0].numIntensives, err);	// callback with new numChoices, no error
 							});
 						} else {
-							callback(null);
+							// callback with same numChoices, no error
+							callback(numChoices, null);
 						}
 					} else {
-						callback(err);
+						// callback with same numChoices, and whatever error was thrown
+						callback(numChoices, err);
 					}
 				});
 			} else {
-				callback(err);
+				// callback without numChoices, and whatever error was thrown
+				callback(null, err);
 			}
 		});
 	},

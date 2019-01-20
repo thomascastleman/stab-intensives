@@ -2,10 +2,22 @@
 <html>
 <head>
 	<title>Administrator Portal</title>
-
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js"></script>
 	<script>
+		// remove an intensive by UID
 		function removeIntensive(uid) {
-			console.log(uid);
+			$.post('/deleteIntensive', { uid: uid })
+				.done(function(data) {
+					// if no error, remove intensive table element
+					if (!data.err)
+						$('#intensive' + uid).remove();
+					else
+						alert("Failed to remove intensive.");
+
+					// if number of student choices has been forcibly updated, reload page to show changes
+					if (data.numChoices)
+						window.location.href = "/admin";	// reload page
+				});
 		}
 	</script>
 </head>
@@ -22,7 +34,7 @@
 			<th>Minimum Age</th>
 		</tr>
 		{{#intensives}}
-		<tr>
+		<tr id="intensive{{uid}}">
 			<td>{{name}}</td>
 			<td>{{maxCapacity}}</td>
 			<td>{{minGrade}}</td>
