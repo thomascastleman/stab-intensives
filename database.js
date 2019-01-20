@@ -6,6 +6,6 @@ module.exports = {
 	    host: 'localhost',
 	    user: creds.MySQL_username,
 	    password: creds.MySQL_password,
-	    database: 'intensives'
+	    database: 'intensives_db'
 	})
 }
