@@ -2,6 +2,7 @@
 var con = require('./database.js').connection;
 var auth = require('./auth.js');
 var creds = require('./credentials.js');
+var system = require('./system.js');
 var moment = require('moment');
 const http = require('http');
 const fs = require('fs');
@@ -105,7 +106,7 @@ module.exports = {
 					render.intensivesExist = rows.length > 0;
 
 					// get the system variables
-					module.exports.getAllSystemVars(function(err, vars) {
+					system.getAllSystemVars(function(err, vars) {
 						if (!err) {
 							// add system variables to render object
 							render.variables = vars;
@@ -174,7 +175,7 @@ module.exports = {
 				con.query('DELETE FROM intensives WHERE uid = ?;', [req.body.uid], function(err) {
 					if (!err) {
 						// update numChoices sys variable if necessary
-						module.exports.updateNumChoicesSystemVar(function(numChoices, err) {
+						system.updateNumChoicesSystemVar(function(numChoices, err) {
 							// callback with new number of choices, and error if thrown
 							res.send({ numChoices: numChoices, err: err });
 						});
@@ -198,7 +199,7 @@ module.exports = {
 						// remove all intensives data
 						con.query("DELETE FROM intensives;", function(succcc) {
 							// check if numChoices variable needs to be updated (it likely does now that everything's gone)
-							module.exports.updateNumChoicesSystemVar(function(numChoices, err) {
+							system.updateNumChoicesSystemVar(function(numChoices, err) {
 								// if an error occurred, render an error message
 								if (suc || succ || succc || succcc || err) {
 									res.render("error.html", {message: "Failed to remove all data."});
@@ -275,7 +276,7 @@ module.exports = {
 					render.studentsExist = rows.length > 0;
 
 					// get the time of last update of the student CSV file
-					module.exports.getOneSystemVar('studentCSVLastUpdate', function(err, value) {
+					system.getOneSystemVar('studentCSVLastUpdate', function(err, value) {
 						if (!err) {
 							// add last update date to page (assume already formatted)
 							render.lastUpdate = value;
@@ -290,81 +291,6 @@ module.exports = {
 			});
 		});
 
-	},
-
-	// change the numChoices variable to reflect a change in the number of intensives available
-	updateNumChoicesSystemVar: function(callback) {
-		// look at numChoices system variable
-		con.query('SELECT * FROM system WHERE name = ?;', ['numChoices'], function(err, rows) {
-			if (!err && rows !== undefined && rows.length > 0) {
-				// convert to integer
-				var numChoices = parseInt(rows[0].value);
-
-				// count the number of intensives
-				con.query('SELECT COUNT(*) AS numIntensives FROM intensives;', function(err, rows) {
-					if (!err && rows !== undefined && rows.length > 0) {
-						// if the number of choices is more than the number of intensives available
-						if (numChoices > rows[0].numIntensives || numChoices == 0) {
-							// update numChoices to be number of intensives
-							con.query('UPDATE system SET value = ? WHERE name = ?;', [rows[0].numIntensives, 'numChoices'], function(err) {
-								if (err)
-									callback(numChoices, err);	// callback with same numChoices and the error thrown
-								else
-									callback(rows[0].numIntensives, err);	// callback with new numChoices, no error
-							});
-						} else {
-							// callback with same numChoices, no error
-							callback(numChoices, null);
-						}
-					} else {
-						// callback with same numChoices, and whatever error was thrown
-						callback(numChoices, err);
-					}
-				});
-			} else {
-				// callback without numChoices, and whatever error was thrown
-				callback(null, err);
-			}
-		});
-	},
-
-	// pull system variables from db and convert them into their proper format (int, boolean, date, etc)
-	getAllSystemVars: function(callback) {
-		var variables = {};
-		// get system variables from db
-		con.query('SELECT * FROM system;', function(err, rows) {
-			if (!err && rows !== undefined && rows.length > 0) {
-				// for each system variable
-				for (var i = 0; i < rows.length; i++) {
-					if (rows[i].type == 'BOOL') {
-						// cast to boolean
-						variables[rows[i].name] = rows[i].value == '1' ? true : false;
-					} else if (rows[i].type == 'INT') {
-						// cast to integer
-						variables[rows[i].name] = parseInt(rows[i].value, 10);
-					} else {
-						// use default string value
-						variables[rows[i].name] = rows[i].value;
-					}
-				}
-			}
-
-			// callback on retrieved data
-			callback(err, variables);
-		});
-	},
-
-	// get the string value of a system variable, given its name
-	getOneSystemVar: function(name, callback) {
-		// get everything under this system variable name
-		con.query('SELECT * FROM system WHERE name = ?;', [name], function(err, rows) {
-			if (!err && rows !== undefined && rows.length > 0) {
-				// callback on the value
-				callback(err, rows[0].value);
-			} else {
-				callback(err, null);
-			}
-		});
 	}
 
 }

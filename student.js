@@ -35,6 +35,11 @@ module.exports = {
 		// allow authenticated student to post their preferences
 		app.post('/signup', auth.isAuthenticated, function(req, res) {
 
+			if (req.body.choices) {
+				
+
+			}
+
 		});
 
 		// allow student to confirm which choices they last selected
