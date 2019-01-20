@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Sign Up!</title>
+</head>
+<body>
+	<table>
+		{{#intensives}}
+		<tr id="{{uid}}">
+			<td>{{name}}</td>
+			{{#minGrade}}
+			<td>({{minGrade}}th grade and above)</td>
+			{{/minGrade}}
+			{{#minAge}}
+			<td>(Must be {{minAge}} years of age)</td>
+			{{/minAge}}
+		</tr>
+		{{/intensives}}
+	</table>
+</body>
+</html>
