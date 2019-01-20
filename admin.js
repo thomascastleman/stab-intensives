@@ -116,7 +116,13 @@ module.exports = {
 				// attempt to delete intensive with this UID
 				con.query('DELETE FROM intensives WHERE uid = ?;', [req.body.uid], function(err) {
 					if (!err) {
-						res.redirect('/admin');
+						// update numChoices sys variable if necessary
+						module.exports.updateNumChoicesSystemVar(function(err) {
+							if (!err)
+								res.redirect('/admin');
+							else
+								res.render('error.html', { message: "There was an error updating the number of student choices." });
+						});
 					} else {
 						res.render('error.html', { message: "There was an error deleting this intensive." });
 					}
@@ -195,6 +201,36 @@ module.exports = {
 			}
 		});
 
+	},
+
+	// change the numChoices variable to reflect a change in the number of intensives available
+	updateNumChoicesSystemVar: function(callback) {
+		// look at numChoices system variable
+		con.query('SELECT * FROM system WHERE name = ?;', ['numChoices'], function(err, rows) {
+			if (!err && rows !== undefined && rows.length > 0) {
+				// convert to integer
+				var numChoices = parseInt(rows[0].value);
+
+				// count the number of intensives
+				con.query('SELECT COUNT(*) AS numIntensives FROM intensives;', function(err, rows) {
+					if (!err && rows !== undefined && rows.length > 0) {
+						// if the number of choices is more than the number of intensives available
+						if (numChoices > rows[0].numIntensives) {
+							// update numChoices to be number of intensives
+							con.query('UPDATE system SET value = ? WHERE name = ?;', [rows[0].numIntensives, 'numChoices'], function(err) {
+								callback(err);
+							});
+						} else {
+							callback(null);
+						}
+					} else {
+						callback(err);
+					}
+				});
+			} else {
+				callback(err);
+			}
+		});
 	},
 
 	// pull system variables from db and convert them into their proper format (int, boolean, date, etc)
