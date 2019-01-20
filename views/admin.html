@@ -5,19 +5,21 @@
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js"></script>
 	<script>
 		// remove an intensive by UID
-		function removeIntensive(uid) {
-			$.post('/deleteIntensive', { uid: uid })
-				.done(function(data) {
-					// if no error, remove intensive table element
-					if (!data.err)
-						$('#intensive' + uid).remove();
-					else
-						alert("Failed to remove intensive.");
+		function removeIntensive(uid, name) {
+			if (confirm("Are you sure you want to remove the intensive '" + name + "'?")) {
+				$.post('/deleteIntensive', { uid: uid })
+					.done(function(data) {
+						// if no error, remove intensive table element
+						if (!data.err)
+							$('#intensive' + uid).remove();
+						else
+							alert("Failed to remove intensive.");
 
-					// if number of student choices has been forcibly updated, reload page to show changes
-					if (data.numChoices)
-						window.location.href = "/admin";	// reload page
-				});
+						// if number of student choices has been forcibly updated, reload page to show changes
+						if (data.numChoices)
+							window.location.href = "/admin";	// reload page
+					});
+			}
 		}
 	</script>
 </head>
@@ -39,7 +41,7 @@
 			<td>{{maxCapacity}}</td>
 			<td>{{minGrade}}</td>
 			<td>{{minAge}}</td>
-			<td><button onclick="removeIntensive({{uid}});">Delete</button></td>
+			<td><button onclick="removeIntensive({{uid}}, '{{name}}');">Delete</button></td>
 		</tr>
 		{{/intensives}}
 		<form action="/createIntensive" method="POST">
