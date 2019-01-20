@@ -15,6 +15,7 @@ module.exports = {
 
 		// cache user info from our system into their session
 		passport.serializeUser(function(user, done) {
+			console.log(user);
 			done(null, user);
 		});
 

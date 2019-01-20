@@ -24,6 +24,11 @@ app.use(session({
 }));
 
 var auth = require('./auth.js').init(app, passport);	// include auth file
+var admin = require('./admin.js').init(app);
+
+app.get('/', function(req, res) {
+	res.end();
+});
 
 // start server
 var server = app.listen(8080, function() {
