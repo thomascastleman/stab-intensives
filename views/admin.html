@@ -26,6 +26,16 @@
 					});
 			}
 		}
+
+		// check if all fields are filled in for a new intensive
+		function confirmNewIntensive(form) {
+			if (form.name.value == '' || form.maxCapacity.value == '') {
+				alert("You must fill in all fields before submitting a new intensive.");
+				return false;
+			} else {
+				return true;
+			}
+		}
 	</script>
 </head>
 <body>
@@ -72,7 +82,7 @@
 						<option value="19">19</option>
 					</select>
 				</td>
-				<td><button type="submit">Add</button></td>
+				<td><button type="submit" onclick="return confirmNewIntensive(this.form);">Add</button></td>
 			</tr>
 		</form>
 	</table>
