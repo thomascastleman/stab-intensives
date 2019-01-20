@@ -41,14 +41,17 @@ module.exports = {
 			}
 		});
 
-		app.get('/wipeAllData', function(req, res){
+		// wipe tables in database that pertain to a specific matching
+		app.get('/wipeAllData', auth.restrictAdmin, function(req, res){
 			con.query("DELETE FROM matching;", function(suc){
 				con.query("DELETE FROM preferences;", function(succ){
 					con.query("DELETE FROM students;", function(succc){
 						con.query("DELETE FROM intensives;", function(succcc){
-							res.render("error.html", {message: "failure to delete somthing :( "});
-						
-						});			
+							// if an error occurred, render an error message
+							if (suc || succ || succc || succcc) {
+								res.render("error.html", {message: "Failure to delete something :("});
+							}
+						});		
 					});	
 				});
 			});

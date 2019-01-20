@@ -62,7 +62,7 @@ CREATE TABLE system (
 );
 
 -- insert defaults for system: 5 choices and no grade priority
-INSERT INTO system (name, value) VALUES ("numChoices", "5"), ("prioritizeByGrade", "0");
+INSERT INTO system (name, value) VALUES ("numChoices", "5"), ("prioritizeByGrade", "0"), ("signUpsAvailable", "0");
 
 
 
