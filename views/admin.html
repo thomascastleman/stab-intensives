@@ -86,13 +86,15 @@
 
 
 		{{#intensivesExist}}
-			Students can select top 
-			<select>
-				{{#choiceNumbers}}
-				<option value="{{n}}" {{#selected}}selected{{/selected}}>{{n}}</option>
-				{{/choiceNumbers}}
-			</select>
-			intensives.<br>
+			<form action="/changeNumChoices" method="POST">
+				Students can select top 
+				<select name="numChoices" onchange="this.form.submit();">
+					{{#choiceNumbers}}
+					<option value="{{n}}" {{#selected}}selected{{/selected}}>{{n}}</option>
+					{{/choiceNumbers}}
+				</select>
+				intensives.<br>
+			</form>
 
 			<form action="/changeSignUpRelease" method="POST">
 				<input name="signUpsAvailable" value="1" hidden>
