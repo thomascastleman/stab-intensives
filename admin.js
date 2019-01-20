@@ -1,6 +1,7 @@
 
 var con = require('./database.js').connection;
 var auth = require('./auth.js');
+var creds = require('./credentials.js');
 const http = require('http');
 const fs = require('fs');
 const multer = require('multer');
@@ -47,10 +48,10 @@ module.exports = {
 
 		// render admin portal
 		app.get('/admin', auth.restrictAdmin, function(req, res) {
-			var render = {};
+			var render = { domain: creds.domain };
 
 			// get all intensives recorded in db
-			con.query('SELECT * FROM intensives;', function(err, rows) {
+			con.query('SELECT name, maxCapacity, IF(minGrade = 9, "None", minGrade) AS minGrade, IF(minAge = 0, "None", minAge) AS minAge FROM intensives;', function(err, rows) {
 				if (!err && rows !== undefined) {
 					// add intensives info to render object
 					render.intensives = rows;
@@ -68,8 +69,19 @@ module.exports = {
 								render.choiceNumbers.push({ n: i, selected: i == render.variables.numChoices });
 							}
 
-							// render admin portal
-							res.render('admin.html', render);
+							// if sign ups are out
+							if (render.variables.signUpsAvailable) {
+								con.query('SELECT name, lastSignUp, lastSignUp IS NOT NULL AS signUpStatus FROM students;', function(err, rows) {
+									if (!err && rows !== undefined && rows.length > 0) {
+										render.students = rows;
+									}
+
+									// render admin portal
+									res.render('admin.html', render);
+								});
+							} else {
+								res.render('admin.html', render);
+							}
 						} else {
 							res.render('error.html', { message: "Unable to retrieve system parameters." });
 						}

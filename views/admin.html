@@ -34,8 +34,25 @@
 			<tr>
 				<td><input name="name" type="text" autocomplete="off" placeholder="Enter Name"></td>
 				<td><input name="maxCapacity" type="text" autocomplete="off" placeholder="Enter Max Capacity"></td>
-				<td><input name="minGrade" type="text" autocomplete="off" placeholder="Enter Min Grade"></td>
-				<td><input name="minAge" type="text" autocomplete="off" placeholder="Enter Min Age"></td>
+				<td>
+					<select name="minGrade">
+						<option value="9">None</option>
+						<option value="10">10</option>
+						<option value="11">11</option>
+						<option value="12">12</option>
+					</select>
+				</td>
+				<td>
+					<select name="minAge">
+						<option value="0">None</option>
+						<option value="14">14</option>
+						<option value="15">15</option>
+						<option value="16">16</option>
+						<option value="17">17</option>
+						<option value="18">18</option>
+						<option value="19">19</option>
+					</select>
+				</td>
 				<td><button type="submit">Add</button></td>
 			</tr>
 		</form>
@@ -58,9 +75,10 @@
 	</select>
 	intensives.<br>
 
-	<button>Release Sign Up</button>
+	<button>Release Sign-Up</button>
 	<br>
 	{{/intensivesExist}}
+
 	{{^intensivesExist}}
 	<p>There must be intensives in the system before the student sign-up can be released. Consider adding an intensive above.</p>
 	{{/intensivesExist}}
@@ -68,7 +86,26 @@
 	{{/variables.signUpsAvailable}}
 	{{#variables.signUpsAvailable}}
 
-	<h3>Student Sign Up Progress</h3>
+	<h3>Student Sign-Up Progress</h3>
+
+	<p>The student sign-up is live at <strong>{{domain}}/signup</strong></p>
+
+	<button>Close Sign-Up</button>
+
+	<table>
+		<tr>
+			<th>Student</th>
+			<th>Last Sign-Up Date</th>
+			<th>Sign-Up Status</th>
+		</tr>
+		{{#students}}
+		<tr>
+			<td>{{name}}</td>
+			<td>{{lastSignUp}}</td>
+			<td>{{signUpStatus}}</td>
+		</tr>
+		{{/students}}
+	</table>
 
 	{{/variables.signUpsAvailable}}
 

@@ -3,6 +3,8 @@
 
 students.csv
 
+tmp/csv/
+
 package-lock.json
 
 # Dependency directories

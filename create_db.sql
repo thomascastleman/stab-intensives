@@ -21,6 +21,7 @@ CREATE TABLE students (
 	email VARCHAR(45),
 	age INT,
 	grade INT,
+	lastSignUp DATETIME,
 	PRIMARY KEY (uid)
 );
 
