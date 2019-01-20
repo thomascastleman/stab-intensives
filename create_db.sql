@@ -66,8 +66,6 @@ INSERT INTO system (name, value) VALUES ("numChoices", "5"), ("prioritizeByGrade
 
 
 
-
-
 -- DEBUG -----------------------------
 INSERT INTO intensives (name, maxCapacity) VALUES ("Art of Argument", 25);
 INSERT INTO students (name, email, age, grade) VALUES ("Thomas C", "thomas@gmail.com", 10, 12);

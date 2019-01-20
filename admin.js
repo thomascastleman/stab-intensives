@@ -22,8 +22,6 @@ module.exports = {
 			}
 		});
 
-		
-
 		// delete an intensive from system
 		app.post('/deleteIntensive', auth.isAdmin, function(req, res) {
 			// if UID exists
@@ -55,6 +53,32 @@ module.exports = {
 					});	
 				});
 			});
+		});
+
+		// edit the number of choices students are allowed to rank
+		app.post('/changeNumChoices', auth.isAdmin, function(req, res) {
+			// if field is not null
+			if (req.body.numChoices !== null) {
+				// update system variable
+				con.query('UPDATE system SET value = ? WHERE name = ?;', [req.body.numChoices, "numChoices"], function(err) {
+					if (!err) {
+						res.redirect('/admin');
+					} else {
+						res.render('error.html', { message: "Unable to update number of student choices." });
+					}
+				});
+			} else {
+				res.render('error.html', { message: "Unable to set number of student choices due to null field."})
+			}
+		});
+
+		// change whether or not grade is factored into matching
+		app.post('/prioritizeGrade', auth.isAdmin, function(req, res) {
+
+		});
+
+		// change whether sign ups are open or closed
+		app.post('/changeSignUpRelease', auth.isAdmin, function(req, res) {
 
 		});
 
