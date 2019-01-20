@@ -1,10 +1,55 @@
 
 var con = require('./database.js').connection;
 var auth = require('./auth.js');
+const http = require('http');
+const fs = require('fs');
+const multer = require('multer');
+const csv = require('fast-csv');
+const upload = multer({ dest: 'tmp/csv/' });
 
 module.exports = {
 	// set up admin routes
 	init: function(app) {
+		// on upload of a student CSV file
+		app.post('/uploadStudentCSV', upload.single('file'), auth.isAdmin, function (req, res) {
+		  const fileRows = [];
+
+		  // open uploaded file
+		  csv.fromPath(req.file.path)
+		    .on("data", function (data) {
+		    	// push each row
+				fileRows.push(data);
+		    })
+		    .on("end", function () {
+		    	// remove temp file
+				fs.unlinkSync(req.file.path);
+
+				// remove the header of the CSV file
+				fileRows.shift();
+
+				// ensure students table is clear
+				con.query('DELETE FROM students;', function(err) {
+					if (!err) {
+						// batch insert student data into students table
+						con.query('INSERT INTO students (name, email, age, grade) VALUES ?;', [fileRows], function(err) {
+							if (!err) {
+								res.redirect('/admin');
+							} else {
+								res.render('error.html', { message: "Failed to upload students to database." });
+							}
+						});
+					} else {
+						res.render('error.html', { message: "Failed to clear existing record of students." });
+					}
+				});
+		    });
+		});
+
+		// render admin portal
+		app.get('/admin', auth.restrictAdmin, function(req, res) {
+			res.render('admin.html');
+		});
+
 		// add a new intensive to database
 		app.post('/createIntensive', auth.isAdmin, function(req, res) {
 			// if fields all exist
