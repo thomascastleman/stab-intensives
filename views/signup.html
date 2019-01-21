@@ -11,15 +11,20 @@
 
 		// POST choices to be recorded
 		function submitChoices() {
-			$.post('/signup', { choices: choices })
-					.done(function(err) {
-						if (!err) {
-							// show confirmation message
-							window.location.href = "/signupConfirm";
-						} else {
-							alert("Failed to submit choices.");
-						}
-					});
+			if (choices.length == numChoices) {
+				$.post('/signup', { choices: choices })
+						.done(function(err) {
+							if (!err) {
+								// show confirmation message
+								window.location.href = "/signupConfirm";
+							} else {
+								alert("Failed to submit choices.");
+							}
+							
+						});
+			} else {
+				alert('You must choose ' + numChoices + ' intensives.');
+			}
 		}
 
 		// re display the icons numbering student choices
@@ -68,14 +73,12 @@
 			// render icons to start
 			rerenderIcons();
 		});
-
-
 	</script>
 	{{/available}}
 </head>
 <body>
 	{{#available}}
-
+		<h3>Click an intensive to choose it.</h3>
 		<table id="intensives">
 			{{#intensives}}
 			<tr id="{{uid}}" class="row">

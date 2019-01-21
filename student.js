@@ -58,7 +58,10 @@ module.exports = {
 						// parse to integer UID's, add to array to insert
 						var c = 0;
 						for (var i = 0; i < choices.length; i++) {
+							// convert to integer
 							choices[i] = parseInt(choices[i], 10);
+
+							// if valid choice ID, add to insert batch
 							if (choices[i] != NaN)
 								insertChoices.push([studentUID, choices[i], c++]);
 						}
@@ -85,13 +88,33 @@ module.exports = {
 
 		// allow student to confirm which choices they last selected
 		app.get('/signupConfirm', auth.isAuthenticated, function(req, res) {
-			// get the choices for this user
-			module.exports.getChosenIntensives(req.user.local.uid, function(err, intensives) {
-				// register that intensive choices exist
-				var intensivesExist = (intensives !== undefined && intensives.length > 0);
+			var render = {};
 
-				// render confirmation page with choices
-				res.render('signupConfirm.html', { intensives: intensives, intensivesExist: intensivesExist })
+			// get the sign up availability status
+			system.getOneSystemVar('signUpsAvailable', function(err, value) {
+				// if value fetched properly
+				if (!err) {
+					// register sign ups status in render object
+					render.signUpsAvailable = value == "1" ? true : false;
+				}
+
+				// get the choices for this user
+				module.exports.getChosenIntensives(req.user.local.uid, function(err, intensives) {
+					// register that intensive choices exist
+					render.intensivesExist = (intensives !== undefined && intensives.length > 0);
+					render.intensives = intensives;
+
+					// check if number of chosen intensives satisfies required number of choices
+					system.getOneSystemVar('numChoices', function(err, value) {
+						if (!err) {
+							render.numChoices = parseInt(value, 10);
+							render.satisfies = intensives.length == render.numChoices;
+						}
+
+						// render confirmation page with choices
+						res.render('signupConfirm.html', render);
+					});
+				});
 			});
 		});
 	},

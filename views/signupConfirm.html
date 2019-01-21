@@ -4,6 +4,14 @@
 	<title>Sign Up!</title>
 </head>
 <body>
+	{{#signUpsAvailable}}
+		<a href="/signup">Edit your choices</a>
+	{{/signUpsAvailable}}
+
+	{{^satisfies}}
+		<h3>You have not signed up for the required amount of intensives. You must sign up for {{numChoices}}.</h3>
+	{{/satisfies}}
+
 	{{#intensivesExist}}
 	<h1>You have successfully signed up for the following intensives:</h1>
 	<table>
