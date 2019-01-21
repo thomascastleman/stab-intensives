@@ -14,6 +14,9 @@ module.exports = {
 			con.query('SELECT value FROM system WHERE name = ?;', ['signUpsAvailable'], function(err, rows) {
 				if (!err && rows !== undefined && rows.length > 0) {
 					if (rows[0].value == 1) {
+						// register that sign up is available
+						render.available = true;
+
 						// get info of all intensives from db
 						con.query('SELECT uid, name, IF(minGrade = 9, 0, minGrade) AS minGrade, minAge FROM intensives;', function(err, rows) {
 							if (!err && rows !== undefined && rows.length > 0) {
@@ -25,7 +28,7 @@ module.exports = {
 						});
 					} else {
 						// notify user that signups are not available
-						res.render('signupNotAvailable.html');
+						res.render('signup.html', { available: false });
 					}
 				} else {
 					res.render('error.html', { message: "Failed to determine if sign-up is open." });

@@ -2,6 +2,7 @@
 <html>
 <head>
 	<title>Sign Up!</title>
+	{{#available}}
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js"></script>
 	<script>
 		var choices = [2, 3, 1];
@@ -14,22 +15,31 @@
 					});
 		}
 	</script>
+	{{/available}}
 </head>
 <body>
-	<table>
-		{{#intensives}}
-		<tr id="{{uid}}">
-			<td>{{name}}</td>
-			{{#minGrade}}
-			<td>({{minGrade}}th grade and above)</td>
-			{{/minGrade}}
-			{{#minAge}}
-			<td>(Must be {{minAge}} years of age)</td>
-			{{/minAge}}
-		</tr>
-		{{/intensives}}
-	</table>
+	{{#available}}
 
-	<button onclick="submitChoices();">Submit Choices</button>
+		<table>
+			{{#intensives}}
+			<tr id="{{uid}}">
+				<td>{{name}}</td>
+				{{#minGrade}}
+				<td>({{minGrade}}th grade and above)</td>
+				{{/minGrade}}
+				{{#minAge}}
+				<td>(Must be {{minAge}} years of age)</td>
+				{{/minAge}}
+			</tr>
+			{{/intensives}}
+		</table>
+
+		<button onclick="submitChoices();">Submit Choices</button>
+
+	{{/available}}
+
+	{{^available}}
+		<p>The intensives sign-up form is not available at the moment. Please try again later.</p>
+	{{/available}}
 </body>
 </html>
