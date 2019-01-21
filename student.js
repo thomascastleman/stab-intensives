@@ -10,29 +10,37 @@ module.exports = {
 		app.get('/signup', auth.restrictAuth, function(req, res) {
 			var render = {};
 
-			// check system vars to see if sign ups are open
-			con.query('SELECT value FROM system WHERE name = ?;', ['signUpsAvailable'], function(err, rows) {
-				if (!err && rows !== undefined && rows.length > 0) {
-					if (rows[0].value == 1) {
+			// get all system vars
+			system.getAllSystemVars(function(err, vars) {
+					// register sign up portal if sign ups are available
+					if (vars['signUpsAvailable'] == 1) {
 						// register that sign up is available
 						render.available = true;
+						render.numChoices = vars['numChoices'];
 
 						// get info of all intensives from db
 						con.query('SELECT uid, name, IF(minGrade = 9, 0, minGrade) AS minGrade, minAge FROM intensives;', function(err, rows) {
 							if (!err && rows !== undefined && rows.length > 0) {
 								render.intensives = rows;
+								render.numIntensives = rows.length;
 							}
 
-							// render page with all intensives
-							res.render('signup.html', render);
+							// get the existing preferences for this user, if they exist
+							module.exports.getChosenIntensives(req.user.local.uid, function(err, intensives) {
+								// transfer choices to render object
+								render.choices = [];
+								for (var i = 0; i < intensives.length; i++) {
+									render.choices.push(intensives[i].uid);
+								}
+
+								// render page with all intensives
+								res.render('signup.html', render);
+							});
 						});
 					} else {
 						// notify user that signups are not available
 						res.render('signup.html', { available: false });
 					}
-				} else {
-					res.render('error.html', { message: "Failed to determine if sign-up is open." });
-				}
 			});
 		});
 
@@ -55,9 +63,16 @@ module.exports = {
 								insertChoices.push([studentUID, choices[i], c++]);
 						}
 
-						// insert preferences into preference table
-						con.query('INSERT INTO preferences (studentUID, intensiveUID, choice) VALUES ?;', [insertChoices], function(err) {
-							res.send(err);
+						// make sure previous preference data is flushed
+						con.query('DELETE FROM preferences WHERE studentUID = ?;', [studentUID], function(err) {
+							if (!err) {
+								// insert preferences into preference table
+								con.query('INSERT INTO preferences (studentUID, intensiveUID, choice) VALUES ?;', [insertChoices], function(err) {
+									res.send(err);
+								});
+							} else {
+								res.send(err);
+							}
 						});
 					} else {
 						res.send(err)
@@ -70,14 +85,22 @@ module.exports = {
 
 		// allow student to confirm which choices they last selected
 		app.get('/signupConfirm', auth.isAuthenticated, function(req, res) {
-			// select intensives this user has signed up for
-			con.query('SELECT choice + 1 AS choice, intensives.name FROM preferences JOIN intensives ON preferences.intensiveUID = intensives.uid WHERE preferences.studentUID = ? ORDER BY preferences.choice ASC;', [req.user.local.uid], function(err, rows) {
-				if (!err && rows !== undefined && rows.length > 0) {
-					res.render('signupConfirm.html', { intensives: rows, intensivesExist: true });
-				} else if (rows.length == 0) {
-					res.render('signupConfirm.html');
-				}
+			// get the choices for this user
+			module.exports.getChosenIntensives(req.user.local.uid, function(err, intensives) {
+				// register that intensive choices exist
+				var intensivesExist = (intensives !== undefined && intensives.length > 0);
+
+				// render confirmation page with choices
+				res.render('signupConfirm.html', { intensives: intensives, intensivesExist: intensivesExist })
 			});
+		});
+	},
+
+	// get the intensives chosen by a given user 
+	getChosenIntensives: function(userUID, callback) {
+		// select intensives this user has signed up for
+		con.query('SELECT choice + 1 AS choice, intensives.name, intensives.uid FROM preferences JOIN intensives ON preferences.intensiveUID = intensives.uid WHERE preferences.studentUID = ? ORDER BY preferences.choice ASC;', [userUID], function(err, rows) {
+			callback(err, rows);
 		});
 	}
 }
