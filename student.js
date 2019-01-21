@@ -67,7 +67,14 @@ module.exports = {
 
 		// allow student to confirm which choices they last selected
 		app.get('/signupConfirm', auth.isAuthenticated, function(req, res) {
-
+			// select intensives this user has signed up for
+			con.query('SELECT choice + 1 AS choice, intensives.name FROM preferences JOIN intensives ON preferences.intensiveUID = intensives.uid WHERE preferences.studentUID = ? ORDER BY preferences.choice ASC;', [req.user.local.uid], function(err, rows) {
+				if (!err && rows !== undefined && rows.length > 0) {
+					res.render('signupConfirm.html', { intensives: rows, intensivesExist: true });
+				} else if (rows.length == 0) {
+					res.render('signupConfirm.html');
+				}
+			});
 		});
 	}
 }

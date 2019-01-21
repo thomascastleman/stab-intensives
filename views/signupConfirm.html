@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Sign Up!</title>
+</head>
+<body>
+	{{#intensivesExist}}
+	<h1>You have successfully signed up for the following intensives:</h1>
+	<table>
+		{{#intensives}}
+		<tr>
+			<td>{{choice}}.</td>
+			<td>{{name}}</td>
+		</tr>
+		{{/intensives}}
+	</table>
+	{{/intensivesExist}}
+
+	{{^intensivesExist}}
+	<h1>It appears you haven't signed up for any intensives.</h1>
+	{{/intensivesExist}}
+</body>
+</html>
