@@ -17,91 +17,110 @@ module.exports = {
 		app.post('/uploadStudentCSV', upload.single('file'), auth.isAdmin, function(req, res) { // auth.isAdmin, function (req, res) {
 		  const fileRows = [];
 
-		  // open uploaded file
-		  csv.fromPath(req.file.path)
-		    .on("data", function (data) {
-		    	// push each row
-				fileRows.push(data);
-		    })
-		    .on("end", function () {
-		    	// remove temp file
-				fs.unlinkSync(req.file.path);
+		  // check that user uploaded file
+		  if (req.file) {
+			  // open uploaded file
+			  csv.fromPath(req.file.path)
+			    .on("data", function (data) {
+			    	// push each row
+					fileRows.push(data);
+			    })
+			    .on("end", function () {
+			    	// remove temp file
+					fs.unlinkSync(req.file.path);
 
-				// remove the header of the CSV file
-				fileRows.shift();
+					// remove the header of the CSV file
+					fileRows.shift();
 
-				// ensure students table is clear
-				con.query('DELETE FROM students;', function(err) {
-					if (!err) {
-						// batch insert student data into students table
-						for (var i = 0; i < fileRows.length; i ++){
-							fileRows[i][3] = fileRows[i][3].match(/\d+/)[0];
-							//console.log(fileRows[i][3].match(/\d+/))
-						}
-						con.query('INSERT INTO students (name, email, age, grade) VALUES ?;', [fileRows], function(err) {
-							if (!err) {
-								// record current time
-								var now = moment().format('MMMM Do YYYY, h:mm a');
+					// ensure students table is clear
+					con.query('DELETE FROM students;', function(err) {
+						if (!err) {
+							var match; 
+							// parse the fourth column for numeric grade value ("Grade N")
+							for (var i = 0; i < fileRows.length; i ++){
+								match = fileRows[i][3].match(/\d+/);
 
-								// set last update on student CSV to current time
-								con.query('UPDATE system SET value = ? WHERE name = ?;', [now, 'studentCSVLastUpdate'], function(err) {
-									if (!err) {
-										res.redirect('/admin');
-									} else {
-										res.render('error.html', { message: "Failed to register time of last update." });
-									}
-								});
-							} else {
-								//console.log(err);
-								res.render('error.html', { message: "Failed to upload students to database." });
+								// ensure match was found
+								if (match) {
+									fileRows[i][3] = match[0];
+								}
 							}
-						});
-					} else {
-						res.render('error.html', { message: "Failed to clear existing record of students." });
-					}
-				});
-		    });
+
+							// batch insert student data into students table
+							con.query('INSERT INTO students (name, email, age, grade) VALUES ?;', [fileRows], function(err) {
+								if (!err) {
+									// record current time
+									var now = moment().format('MMMM Do YYYY, h:mm a');
+
+									// set last update on student CSV to current time
+									con.query('UPDATE system SET value = ? WHERE name = ?;', [now, 'studentCSVLastUpdate'], function(err) {
+										if (!err) {
+											res.redirect('/admin');
+										} else {
+											res.render('error.html', { message: "Failed to register time of last update." });
+										}
+									});
+								} else {
+									//console.log(err);
+									res.render('error.html', { message: "Failed to upload students to database." });
+								}
+							});
+						} else {
+							res.render('error.html', { message: "Failed to clear existing record of students." });
+						}
+					});
+			    });
+			} else {
+				res.render('error.html', { message: "You must post an actual file to be uploaded." });
+			}
 		});
 
 		// on upload of an intensives CSV file
 		app.post('/uploadIntensiveCSV', upload.single('file'), auth.isAdmin, function (req, res) {
 		  const fileRows = [];
 
-		  // open uploaded file
-		  csv.fromPath(req.file.path)
-		    .on("data", function (data) {
-		    	// push each row
-				fileRows.push(data);
-		    })
-		    .on("end", function () {
-		    	// remove temp file
-				fs.unlinkSync(req.file.path);
+		  // check if user uploaded a file
+		  if (req.file) {
 
-				// remove the header of the CSV file
-				fileRows.shift();
+			  // open uploaded file
+			  csv.fromPath(req.file.path)
+			    .on("data", function (data) {
+			    	// push each row
+					fileRows.push(data);
+			    })
+			    .on("end", function () {
+			    	// remove temp file
+					fs.unlinkSync(req.file.path);
 
-				for (var i = 0; i < fileRows.length; i ++){
-					fileRows[i].shift()
-					fileRows[i][2] = fileRows[i][2].match(/\d+/)[0];
-							//console.log(fileRows[i][3].match(/\d+/))
-				}
+					// remove the header of the CSV file
+					fileRows.shift();
 
-				// ensure intensives table is clear
-				con.query('DELETE FROM intensives;', function(err) {
-					if (!err) {
-						// batch insert intensive data into intensives table
-						con.query('INSERT INTO intensives (name, maxCapacity, minGrade, minAge) VALUES ?;', [fileRows], function(err) {
-							if (!err) {
-								res.redirect('/admin');
-							} else {
-								res.render('error.html', { message: "Failed to upload intensives to database." });
-							}
-						});
-					} else {
-						res.render('error.html', { message: "Failed to clear existing record of intensives." });
+					for (var i = 0; i < fileRows.length; i ++){
+						fileRows[i].shift()
+						fileRows[i][2] = fileRows[i][2].match(/\d+/)[0];
+								//console.log(fileRows[i][3].match(/\d+/))
 					}
-				});
-		    });
+
+					// ensure intensives table is clear
+					con.query('DELETE FROM intensives;', function(err) {
+						if (!err) {
+							// batch insert intensive data into intensives table
+							con.query('INSERT INTO intensives (name, maxCapacity, minGrade, minAge) VALUES ?;', [fileRows], function(err) {
+								if (!err) {
+									res.redirect('/admin');
+								} else {
+									res.render('error.html', { message: "Failed to upload intensives to database." });
+								}
+							});
+						} else {
+							res.render('error.html', { message: "Failed to clear existing record of intensives." });
+						}
+					});
+			    });
+
+			} else {
+				res.render('error.html', { message: "You must post an actual file to be uploaded." });
+			}
 		});
 
 		// render admin portal
