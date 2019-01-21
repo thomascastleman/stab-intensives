@@ -2,6 +2,7 @@
 var con = require('./database.js').connection;
 var auth = require('./auth.js');
 var creds = require('./credentials.js');
+var system = require('./system.js');
 
 module.exports = {
 	init: function(app) {
@@ -34,12 +35,34 @@ module.exports = {
 
 		// allow authenticated student to post their preferences
 		app.post('/signup', auth.isAuthenticated, function(req, res) {
-
+			// check if field is null
 			if (req.body.choices) {
-				
+				// get number of choices allotted to students
+				system.getOneSystemVar('numChoices', function(err, value) {
+					if (!err) {
+						var studentUID = req.user.local.uid;
+						var insertChoices = [];
+						var choices = req.body.choices.slice(0, parseInt(value, 10));
 
+						// parse to integer UID's, add to array to insert
+						var c = 0;
+						for (var i = 0; i < choices.length; i++) {
+							choices[i] = parseInt(choices[i], 10);
+							if (choices[i] != NaN)
+								insertChoices.push([studentUID, choices[i], c++]);
+						}
+
+						// insert preferences into preference table
+						con.query('INSERT INTO preferences (studentUID, intensiveUID, choice) VALUES ?;', [insertChoices], function(err) {
+							res.send(err);
+						});
+					} else {
+						res.send(err)
+					}
+				});
+			} else {
+				res.send("No choices specified in request.");
 			}
-
 		});
 
 		// allow student to confirm which choices they last selected

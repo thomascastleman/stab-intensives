@@ -9,8 +9,8 @@
 		// POST choices to be recorded
 		function submitChoices() {
 			$.post('/signup', { choices: choices })
-					.done(function(data) {
-						console.log(data);
+					.done(function(err) {
+						console.log(err);
 					});
 		}
 	</script>
