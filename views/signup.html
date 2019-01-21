@@ -6,19 +6,26 @@
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js"></script>
 	<script>
 		var numChoices = {{numChoices}};
-		var numIntensives = {{numIntensives}};
 		var choices = [{{{choices}}}];
+		var intensiveUIDs = [{{{intensiveUIDs}}}];
 
 		// POST choices to be recorded
 		function submitChoices() {
+			// if enough choices have been indicated
 			if (choices.length == numChoices) {
 				$.post('/signup', { choices: choices })
-						.done(function(err) {
-							if (!err) {
+						.done(function(status) {
+							if (!status.error) {
 								// show confirmation message
-								window.location.href = "/signupConfirm";
+								window.location.href = "/confirm";
 							} else {
-								alert("Failed to submit choices.");
+								console.log(status);
+								// alert admin they can't sign up
+								if (status.admin) {
+									alert("Administrators may not sign up.");
+								} else {
+									alert("Failed to submit choices.");
+								}
 							}
 							
 						});
@@ -27,19 +34,25 @@
 			}
 		}
 
-		// re display the icons numbering student choices
+		// re-display the icons numbering student choices
 		function rerenderIcons() {
-			for (var i = 1; i <= numIntensives; i++) {
+			var uid, $icon;
+
+			// for each intensive
+			for (var i = 0; i < intensiveUIDs.length; i++) {
+				uid = intensiveUIDs[i];
+				$icon = $('#icon' + uid);
+
 				// remove every icon
-				$('#icon' + i).empty();
+				$icon.empty();
 
 				// get index of this intensive in choices 
-				var idx = choices.indexOf(i);
+				var idx = choices.indexOf(uid);
 
 				// if intensive is a selected choice
 				if (idx != -1) {
 					// add number icon
-					$('#icon' + i).text(idx + 1);
+					$icon.text(idx + 1);
 				}
 			}
 		}

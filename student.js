@@ -12,108 +12,109 @@ module.exports = {
 
 			// get all system vars
 			system.getAllSystemVars(function(err, vars) {
-					// register sign up portal if sign ups are available
-					if (vars['signUpsAvailable'] == 1) {
-						// register that sign up is available
-						render.available = true;
-						render.numChoices = vars['numChoices'];
+				// register sign up portal if sign ups are available
+				if (vars['signUpsAvailable'] == 1) {
+					// register that sign up is available
+					render.available = true;
+					render.numChoices = vars['numChoices'];
 
-						// get info of all intensives from db
-						con.query('SELECT uid, name, IF(minGrade = 9, 0, minGrade) AS minGrade, minAge FROM intensives;', function(err, rows) {
-							if (!err && rows !== undefined && rows.length > 0) {
-								render.intensives = rows;
-								render.numIntensives = rows.length;
+					// get all intensives, with this user's choice info
+					con.query('SELECT i.uid, i.name, IF(i.minGrade = 9, 0, i.minGrade) AS minGrade, i.minAge, p.choice FROM intensives i LEFT JOIN preferences p ON i.uid = p.intensiveUID AND p.studentUID = ?;', [req.user.local.uid], function(err, rows) {
+						if (!err && rows !== undefined && rows.length > 0) {
+							render.intensives = rows;
+							render.intensiveUIDs = [];
+							render.choices = [];
+
+							// collect more specific data about intensives to send
+							for (var i = 0; i < rows.length; i++) {
+								// add intensive UID to array
+								render.intensiveUIDs.push(rows[i].uid);
+
+								// if this intensive was chosen, insert its ID into array of choices at correct position
+								if (rows[i].choice != null)
+									render.choices.splice(rows[i].choice,0, rows[i].uid);
 							}
+						}
 
-							// get the existing preferences for this user, if they exist
-							module.exports.getChosenIntensives(req.user.local.uid, function(err, intensives) {
-								// transfer choices to render object
-								render.choices = [];
-								for (var i = 0; i < intensives.length; i++) {
-									render.choices.push(intensives[i].uid);
-								}
-
-								// render page with all intensives
-								res.render('signup.html', render);
-							});
-						});
-					} else {
-						// notify user that signups are not available
-						res.render('signup.html', { available: false });
-					}
+						// render page with all intensives
+						res.render('signup.html', render);
+					});
+				} else {
+					// notify user that signups are not available
+					res.render('signup.html', { available: false });
+				}
 			});
 		});
 
 		// allow authenticated student to post their preferences
 		app.post('/signup', auth.isAuthenticated, function(req, res) {
-			// check if field is null
+			// ensure field is not null
 			if (req.body.choices) {
-				// get number of choices allotted to students
-				system.getOneSystemVar('numChoices', function(err, value) {
-					if (!err) {
-						var studentUID = req.user.local.uid;
-						var insertChoices = [];
-						var choices = req.body.choices.slice(0, parseInt(value, 10));
+				// ensure an admin isn't trying to sign up
+				if (!req.user.local.isAdmin) {
+					// get number of choices allotted to students
+					system.getOneSystemVar('numChoices', function(err, value) {
+						if (!err) {
+							var studentUID = req.user.local.uid;
+							var insertChoices = [];
+							var choices = req.body.choices.slice(0, parseInt(value, 10));
 
-						// parse to integer UID's, add to array to insert
-						var c = 0;
-						for (var i = 0; i < choices.length; i++) {
-							// convert to integer
-							choices[i] = parseInt(choices[i], 10);
+							// parse to integer UID's, add to array to insert
+							var c = 0;
+							for (var i = 0; i < choices.length; i++) {
+								// convert to integer
+								choices[i] = parseInt(choices[i], 10);
 
-							// if valid choice ID, add to insert batch
-							if (choices[i] != NaN)
-								insertChoices.push([studentUID, choices[i], c++]);
-						}
-
-						// make sure previous preference data is flushed
-						con.query('DELETE FROM preferences WHERE studentUID = ?;', [studentUID], function(err) {
-							if (!err) {
-								// insert preferences into preference table
-								con.query('INSERT INTO preferences (studentUID, intensiveUID, choice) VALUES ?;', [insertChoices], function(err) {
-									res.send(err);
-								});
-							} else {
-								res.send(err);
+								// if valid choice ID, add to insert batch
+								if (choices[i] != NaN)
+									insertChoices.push([studentUID, choices[i], c++]);
 							}
-						});
-					} else {
-						res.send(err)
-					}
-				});
+
+							// make sure previous preference data is flushed
+							con.query('DELETE FROM preferences WHERE studentUID = ?;', [studentUID], function(err) {
+								if (!err) {
+									// insert preferences into preference table
+									con.query('INSERT INTO preferences (studentUID, intensiveUID, choice) VALUES ?;', [insertChoices], function(err) {
+										res.send({ error: err != null });
+									});
+								} else {
+									res.send({ error: err != null });
+								}
+							});
+						} else {
+							res.send({ error: err != null });
+						}
+					});
+				} else {
+					res.send({ admin: true });
+				}
 			} else {
 				res.send("No choices specified in request.");
 			}
 		});
 
 		// allow student to confirm which choices they last selected
-		app.get('/signupConfirm', auth.isAuthenticated, function(req, res) {
+		app.get('/confirm', auth.isAuthenticated, function(req, res) {
 			var render = {};
 
-			// get the sign up availability status
-			system.getOneSystemVar('signUpsAvailable', function(err, value) {
-				// if value fetched properly
+			// get system variables (determine signup availability, number of choices)
+			system.getAllSystemVars(function(err, vars) {
 				if (!err) {
-					// register sign ups status in render object
-					render.signUpsAvailable = value == "1" ? true : false;
+					render.signUpsAvailable = vars['signUpsAvailable'];	// register sign ups status in render object
+					render.numChoices = vars['numChoices'];	// register number of intensive choices
 				}
 
 				// get the choices for this user
 				module.exports.getChosenIntensives(req.user.local.uid, function(err, intensives) {
 					// register that intensive choices exist
 					render.intensivesExist = (intensives !== undefined && intensives.length > 0);
-					render.intensives = intensives;
+					render.intensives = intensives == undefined ? [] : intensives;
 
-					// check if number of chosen intensives satisfies required number of choices
-					system.getOneSystemVar('numChoices', function(err, value) {
-						if (!err) {
-							render.numChoices = parseInt(value, 10);
-							render.satisfies = intensives.length == render.numChoices;
-						}
+					// register whether or not registration has satisfied number of choices requirement
+					render.satisfies = intensives.length == render.numChoices;
 
-						// render confirmation page with choices
-						res.render('signupConfirm.html', render);
-					});
+					// render confirmation page with choices
+					res.render('confirm.html', render);
 				});
 			});
 		});
