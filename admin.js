@@ -33,6 +33,10 @@ module.exports = {
 				con.query('DELETE FROM students;', function(err) {
 					if (!err) {
 						// batch insert student data into students table
+						for (var i = 0; i < fileRows.length; i ++){
+							fileRows[i][3] = fileRows[i][3].match(/\d+/)[0];
+							//console.log(fileRows[i][3].match(/\d+/))
+						}
 						con.query('INSERT INTO students (name, email, age, grade) VALUES ?;', [fileRows], function(err) {
 							if (!err) {
 								// record current time
@@ -47,6 +51,7 @@ module.exports = {
 									}
 								});
 							} else {
+								//console.log(err);
 								res.render('error.html', { message: "Failed to upload students to database." });
 							}
 						});
@@ -73,6 +78,12 @@ module.exports = {
 
 				// remove the header of the CSV file
 				fileRows.shift();
+
+				for (var i = 0; i < fileRows.length; i ++){
+					fileRows[i].shift()
+					fileRows[i][2] = fileRows[i][2].match(/\d+/)[0];
+							//console.log(fileRows[i][3].match(/\d+/))
+				}
 
 				// ensure intensives table is clear
 				con.query('DELETE FROM intensives;', function(err) {

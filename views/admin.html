@@ -46,7 +46,11 @@
 		<p>While student sign-ups are live, you can only <strong>add</strong> new intensives. To delete an intensive or replace the existing intensive data with a new CSV upload, first close the sign-up.</p>
 	{{/variables.signUpsAvailable}}
 	{{^variables.signUpsAvailable}}
-		<button>Upload Intensives CSV</button>
+		<form action="/uploadIntensiveCSV" method="POST" enctype="multipart/form-data">
+    Upload Intensives CSV
+    <input type="file" name="file" id="input">
+    <input type="submit" value="Upload Intensives CSV " name="submit">
+</form>
 	{{/variables.signUpsAvailable}}
 	<table>
 		<tr>
@@ -62,7 +66,7 @@
 			<td>{{minGrade}}</td>
 			<td>{{minAge}}</td>
 			{{^variables.signUpsAvailable}}
-				<td><button onclick="removeIntensive({{uid}}, '{{name}}');">Delete</button></td>
+				<td><button onclick="removeIntensive({{uid}}), '{{name}}');">Delete</button></td>
 			{{/variables.signUpsAvailable}}
 		</tr>
 		{{/intensives}}
@@ -97,7 +101,11 @@
 	{{^variables.signUpsAvailable}}
 
 		<h3>Students</h3>
-		<button>Upload Student CSV</button>
+		<form action="/uploadStudentCSV" method="POST" enctype="multipart/form-data">
+    		Upload Student CSV
+    		<input type="file" name="file" id="input">
+   			 <input type="submit" value="Upload Students CSV " name="submit">
+		</form>
 		{{#variables.studentCSVLastUpdate}}<a href="/viewStudents">View Last Update ({{variables.studentCSVLastUpdate}})</a>{{/variables.studentCSVLastUpdate}}
 		<br>
 
