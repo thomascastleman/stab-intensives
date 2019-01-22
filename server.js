@@ -24,8 +24,8 @@ app.use(session({
 }));
 
 var auth = require('./auth.js').init(app, passport);	// include auth file
-var admin = require('./admin.js').init(app);
-var student = require('./student.js').init(app);
+var admin = require('./admin.js').init(app);	// include admin routes
+var student = require('./student.js').init(app);	// include student routes
 
 app.get('/', function(req, res) {
 	res.end();
