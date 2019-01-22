@@ -1,6 +1,7 @@
 
 var system = require('./system.js');
 var con = require('./database.js').connection;
+var auth = require('./auth.js');
 var hr = require('hospitals-and-residents');
 
 var NUMCHOICES;	// number of intensive choices allotted to students
@@ -40,6 +41,29 @@ hr.softCost = function(int, stu) {
 }
 
 module.exports = {
+
+	init: function(app) {
+		// show matching portal
+		app.get('/match', auth.restrictAdmin, function(req, res) {
+			var render = {};
+
+			// check whether grade priority is in use
+			system.getOneSystemVar('prioritizeByGrade', function(err, value) {
+				if (!err) {
+					render.prioritizeByGrade = parseInt(value, 10);
+
+					res.render('match.html', render);
+				} else {
+					res.render('error.html', { message: "Failed to load matching parameters." });
+				}
+			});
+		});
+
+		// generate a new matching, re-render /match page
+		app.post('/newMatching', auth.isAdmin, function(req, res) {
+
+		});
+	},
 
 	// compute a full matching using student / intensive data in db, write to matching table
 	match: function(callback) {

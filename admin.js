@@ -265,9 +265,9 @@ module.exports = {
 			// if field is not null
 			if (req.body.prioritizeGrade !== null) {
 				// update system variable
-				con.query('UPDATE system SET value = ? WHERE name = ?;', [req.body.prioritizeGrade, "prioritizeGrade"], function(err) {
+				con.query('UPDATE system SET value = ? WHERE name = ?;', [req.body.prioritizeGrade, "prioritizeByGrade"], function(err) {
 					if (!err) {
-						res.redirect('/admin');
+						res.redirect('/match');
 					} else {
 						res.render('error.html', { message: "Unable to update use of grade priority." });
 					}

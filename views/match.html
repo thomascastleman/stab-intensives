@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Administrator Portal</title>
+</head>
+<body>
+	<a href="/admin">To Administrator Portal</a>
+	<h1>Generate Matchings</h1>
+	<form action="/newMatching" method="POST">
+		<button type="submit" onclick="return confirm('Are you sure you want to compute a new matching? It will replace any existing matching data.');">Compute New Matching</button>
+	</form>
+
+	<form action="/prioritizeGrade" method="POST">
+		<span>Prioritize by student grade?</span>
+		<select name="prioritizeGrade" onchange="this.form.submit();">
+			<option value="1"{{#prioritizeByGrade}}selected{{/prioritizeByGrade}}>Yes</option>
+			<option value="0"{{^prioritizeByGrade}}selected{{/prioritizeByGrade}}>No</option>
+		</select>
+	</form>
+</body>
+</html>
