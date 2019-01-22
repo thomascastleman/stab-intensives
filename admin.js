@@ -17,109 +17,124 @@ module.exports = {
 		app.post('/uploadStudentCSV', upload.single('file'), auth.isAdmin, function(req, res) { // auth.isAdmin, function (req, res) {
 		  const fileRows = [];
 
-		  // check that user uploaded file
-		  if (req.file) {
-			  // open uploaded file
-			  csv.fromPath(req.file.path)
-			    .on("data", function (data) {
-			    	// push each row
-					fileRows.push(data);
-			    })
-			    .on("end", function () {
-			    	// remove temp file
-					fs.unlinkSync(req.file.path);
+		  if (!req.file.originalname.includes(".csv")) {
+        	res.render('error.html', { message: "Not a CSV!" });
 
-					// remove the header of the CSV file
-					fileRows.shift();
+   		  } else {
 
-					// ensure students table is clear
-					con.query('DELETE FROM students;', function(err) {
-						if (!err) {
-							var match; 
-							// parse the fourth column for numeric grade value ("Grade N")
-							for (var i = 0; i < fileRows.length; i ++){
-								match = fileRows[i][3].match(/\d+/);
+			  // check that user uploaded file
+			  if (req.file) {
+				  // open uploaded file
+				  csv.fromPath(req.file.path)
+				    .on("data", function (data) {
+				    	// push each row
+						fileRows.push(data);
+				    })
+				    .on("end", function () {
+				    	// remove temp file
+						fs.unlinkSync(req.file.path);
 
-								// ensure match was found
-								if (match) {
-									fileRows[i][3] = match[0];
+						 if (!req.file.originalname.match(/\.(csv)$/)) {
+	        				res.render('error.html', { message: "Not a CSV!" });
+	   					 }
+						// remove the header of the CSV file
+						fileRows.shift();
+
+						// ensure students table is clear
+						con.query('DELETE FROM students;', function(err) {
+							if (!err) {
+								var match; 
+								// parse the fourth column for numeric grade value ("Grade N")
+								for (var i = 0; i < fileRows.length; i ++){
+									match = fileRows[i][3].match(/\d+/);
+
+									// ensure match was found
+									if (match) {
+										fileRows[i][3] = match[0];
+									}
 								}
+
+								// batch insert student data into students table
+								con.query('INSERT INTO students (name, email, age, grade) VALUES ?;', [fileRows], function(err) {
+									if (!err) {
+										// record current time
+										var now = moment().format('MMMM Do YYYY, h:mm a');
+
+										// set last update on student CSV to current time
+										con.query('UPDATE system SET value = ? WHERE name = ?;', [now, 'studentCSVLastUpdate'], function(err) {
+											if (!err) {
+												res.redirect('/admin');
+											} else {
+												res.render('error.html', { message: "Failed to register time of last update." });
+											}
+										});
+									} else {
+										//console.log(err);
+										res.render('error.html', { message: "Failed to upload students to database." });
+									}
+								});
+							} else {
+								res.render('error.html', { message: "Failed to clear existing record of students." });
 							}
-
-							// batch insert student data into students table
-							con.query('INSERT INTO students (name, email, age, grade) VALUES ?;', [fileRows], function(err) {
-								if (!err) {
-									// record current time
-									var now = moment().format('MMMM Do YYYY, h:mm a');
-
-									// set last update on student CSV to current time
-									con.query('UPDATE system SET value = ? WHERE name = ?;', [now, 'studentCSVLastUpdate'], function(err) {
-										if (!err) {
-											res.redirect('/admin');
-										} else {
-											res.render('error.html', { message: "Failed to register time of last update." });
-										}
-									});
-								} else {
-									//console.log(err);
-									res.render('error.html', { message: "Failed to upload students to database." });
-								}
-							});
-						} else {
-							res.render('error.html', { message: "Failed to clear existing record of students." });
-						}
-					});
-			    });
-			} else {
-				res.render('error.html', { message: "You must post an actual file to be uploaded." });
+						});
+				    });
+				} else {
+					res.render('error.html', { message: "You must post an actual file to be uploaded." });
+				}
 			}
 		});
 
 		// on upload of an intensives CSV file
 		app.post('/uploadIntensiveCSV', upload.single('file'), auth.isAdmin, function (req, res) {
 		  const fileRows = [];
+		  if (!req.file.originalname.includes(".csv")) {
+        				res.render('error.html', { message: "Not a CSV!" });
+   		  } else {
 
-		  // check if user uploaded a file
-		  if (req.file) {
+			  // check if user uploaded a file
+			  if (req.file) {
 
-			  // open uploaded file
-			  csv.fromPath(req.file.path)
-			    .on("data", function (data) {
-			    	// push each row
-					fileRows.push(data);
-			    })
-			    .on("end", function () {
-			    	// remove temp file
-					fs.unlinkSync(req.file.path);
+				  // open uploaded file
+				  csv.fromPath(req.file.path)
+				    .on("data", function (data) {
+				    	// push each row
+						fileRows.push(data);
+				    })
+				    .on("end", function () {
+				    	// remove temp file
+						fs.unlinkSync(req.file.path);
 
-					// remove the header of the CSV file
-					fileRows.shift();
 
-					for (var i = 0; i < fileRows.length; i ++){
-						fileRows[i].shift()
-						fileRows[i][2] = fileRows[i][2].match(/\d+/)[0];
-								//console.log(fileRows[i][3].match(/\d+/))
-					}
 
-					// ensure intensives table is clear
-					con.query('DELETE FROM intensives;', function(err) {
-						if (!err) {
-							// batch insert intensive data into intensives table
-							con.query('INSERT INTO intensives (name, maxCapacity, minGrade, minAge) VALUES ?;', [fileRows], function(err) {
-								if (!err) {
-									res.redirect('/admin');
-								} else {
-									res.render('error.html', { message: "Failed to upload intensives to database." });
-								}
-							});
-						} else {
-							res.render('error.html', { message: "Failed to clear existing record of intensives." });
+						// remove the header of the CSV file
+						fileRows.shift();
+
+						for (var i = 0; i < fileRows.length; i ++){
+							fileRows[i].shift()
+							fileRows[i][2] = fileRows[i][2].match(/\d+/)[0];
+									//console.log(fileRows[i][3].match(/\d+/))
 						}
-					});
-			    });
 
-			} else {
-				res.render('error.html', { message: "You must post an actual file to be uploaded." });
+						// ensure intensives table is clear
+						con.query('DELETE FROM intensives;', function(err) {
+							if (!err) {
+								// batch insert intensive data into intensives table
+								con.query('INSERT INTO intensives (name, maxCapacity, minGrade, minAge) VALUES ?;', [fileRows], function(err) {
+									if (!err) {
+										res.redirect('/admin');
+									} else {
+										res.render('error.html', { message: "Failed to upload intensives to database." });
+									}
+								});
+							} else {
+								res.render('error.html', { message: "Failed to clear existing record of intensives." });
+							}
+						});
+				    });
+
+				} else {
+					res.render('error.html', { message: "You must post an actual file to be uploaded." });
+				}
 			}
 		});
 
