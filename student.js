@@ -57,7 +57,7 @@ module.exports = {
 						if (!err) {
 							var studentUID = req.user.local.uid;
 							var insertChoices = [];
-							var choices = req.body.choices.slice(0, parseInt(value, 10));
+							var choices = req.body.choices.slice(0, parseInt(value, 10));	// take only the prescribed number of choices
 
 							// parse to integer UID's, add to array to insert
 							var c = 0;

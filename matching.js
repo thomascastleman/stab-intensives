@@ -118,6 +118,13 @@ module.exports = {
 				// convert to list of student objects
 				for (id in students) {
 					if (students.hasOwnProperty(id)) {
+						var stu = students[id];
+
+						// if student has signed up for anything less than the prescribed number of choices, render them a nonrespondent
+						if (stu.rank.length < NUMCHOICES)
+							stu.rank = [];
+
+						// add student to list
 						objects.push(students[id]);
 					}
 				}
