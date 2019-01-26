@@ -2,7 +2,8 @@
 var system = require('./system.js');
 var con = require('./database.js').connection;
 var auth = require('./auth.js');
-var hr = require('hospitals-and-residents');
+const hr = require('hospitals-and-residents');
+const ordinal = require('ordinal')
 
 var NUMCHOICES;	// number of intensive choices allotted to students
 var PRIORITIZE_GRADE;	// whether or not grade priority is being factored into matching
@@ -42,25 +43,88 @@ hr.softCost = function(int, stu) {
 
 module.exports = {
 
+	// set up routes for matching functionality
 	init: function(app) {
 		// show matching portal
 		app.get('/match', auth.restrictAdmin, function(req, res) {
-			var render = {};
+			// get system variables to check if signups are out
+			system.getAllSystemVars(function(err, vars) {
+				// if signups are closed, proceed
+				if (!vars['signUpsAvailable']) {
+					var render = vars;
 
-			// check whether grade priority is in use
-			system.getOneSystemVar('prioritizeByGrade', function(err, value) {
-				if (!err) {
-					render.prioritizeByGrade = parseInt(value, 10);
+					// get matching info from matching table
+					con.query('SELECT i.name AS intensiveName, i.uid AS intensiveUID, s.name AS studentName, s.uid AS studentUID, p.choice + 1 AS choice FROM intensives i LEFT JOIN matching m ON m.intensiveUID = i.uid LEFT JOIN students s ON m.studentUID = s.uid LEFT JOIN preferences p ON m.intensiveUID = p.intensiveUID AND m.studentUID = p.studentUID;', function(err, rows) {
+						if (!err && rows !== undefined) {
 
-					res.render('match.html', render);
+							var intensiveIDToObject = {};
+
+							// for each row returned
+							for (var i = 0; i < rows.length; i++) {
+								var intUID = rows[i].intensiveUID;
+
+								// if no existing object for this intensive yet
+								if (intensiveIDToObject[intUID] == null) {
+									// create an object to store this intensive's data
+									intensiveIDToObject[intUID] = {
+										intensiveUID: intUID,
+										intensiveName: rows[i].intensiveName,
+										students: []
+									};
+								}
+
+								// if this row represents an assignment between student and intensive
+								if (rows[i].studentUID != null) {
+									// format choice
+									if (rows[i].choice == null) {
+										rows[i].choice = 'Arbitrary';
+									} else {
+										rows[i].choice = ordinal(rows[i].choice);
+									}
+
+									// construct student object
+									var stu = {
+										studentUID: rows[i].studentUID, 
+										studentName: rows[i].studentName, 
+										choice: rows[i].choice
+									}
+
+									// add student object to intensive object
+									intensiveIDToObject[intUID].students.push(stu);
+								}
+							}
+
+							// convert association to list of intensive objects
+	
+							render.intensives = [];
+							for (var id in intensiveIDToObject) {
+								if (intensiveIDToObject.hasOwnProperty(id)) {
+									render.intensives.push(intensiveIDToObject[id]);
+								}
+							}
+
+							// register if no matching has yet been generated
+							if (render.intensives.length == 0)
+								render.noMatching = true;
+
+							res.render('match.html', render);
+						} else {
+							res.render('error.html', { message: "Unable to load matching." });
+						}
+					});
 				} else {
-					res.render('error.html', { message: "Failed to load matching parameters." });
+					res.render('error.html', { message: "Sign-ups must be closed before a matching can be generated." });
 				}
 			});
 		});
 
 		// generate a new matching, re-render /match page
 		app.post('/newMatching', auth.isAdmin, function(req, res) {
+			// make sure to update lastMatching in system table
+		});
+
+		// reassign a student to a different intensive
+		app.post('/reassign', auth.isAdmin, function(req, res) {
 
 		});
 	},

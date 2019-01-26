@@ -68,4 +68,5 @@ INSERT INTO system (name, value, type) VALUES
 	("numChoices", "3", "INT"), 
 	("prioritizeByGrade", "0", "BOOL"), 
 	("signUpsAvailable", "0", "BOOL"), 
-	("studentCSVLastUpdate", NULL, "DATE");
+	("studentCSVLastUpdate", NULL, "DATE"),
+	("lastMatching", NULL, "DATE");

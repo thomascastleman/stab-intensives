@@ -220,26 +220,33 @@ module.exports = {
 
 		// wipe tables in database that pertain to a specific matching
 		app.get('/wipeAllData', auth.restrictAdmin, function(req, res) {
-			// remove matching info
-			con.query("DELETE FROM matching;", function(suc) {
-				// remove gathered student preferences
-				con.query("DELETE FROM preferences;", function(succ) {
-					// remove all student data
-					con.query("DELETE FROM students;", function(succc) {
-						// remove all intensives data
-						con.query("DELETE FROM intensives;", function(succcc) {
-							// check if numChoices variable needs to be updated (it likely does now that everything's gone)
-							system.updateNumChoicesSystemVar(function(numChoices, err) {
-								// if an error occurred, render an error message
-								if (suc || succ || succc || succcc || err) {
-									res.render("error.html", {message: "Failed to remove all data."});
-								} else {
-									res.redirect('/admin');
-								}
-							});
-						});		
-					});	
-				});
+			// ensure that sign ups are closed before wiping data
+			system.getOneSystemVar('signUpsAvailable', function(err, value) {
+				if (!err && value == '0') {
+					// remove matching info
+					con.query("DELETE FROM matching;", function(suc) {
+						// remove gathered student preferences
+						con.query("DELETE FROM preferences;", function(succ) {
+							// remove all student data
+							con.query("DELETE FROM students;", function(succc) {
+								// remove all intensives data
+								con.query("DELETE FROM intensives;", function(succcc) {
+									// check if numChoices variable needs to be updated (it likely does now that everything's gone)
+									system.updateNumChoicesSystemVar(function(numChoices, err) {
+										// if an error occurred, render an error message
+										if (suc || succ || succc || succcc || err) {
+											res.render("error.html", {message: "Failed to remove all data."});
+										} else {
+											res.redirect('/admin');
+										}
+									});
+								});		
+							});	
+						});
+					});
+				} else {
+					res.render('error.html', { message: "The student sign-ups must be closed before you can erase all data." });
+				}
 			});
 		});
 
