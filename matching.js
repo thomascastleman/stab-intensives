@@ -3,7 +3,8 @@ var system = require('./system.js');
 var con = require('./database.js').connection;
 var auth = require('./auth.js');
 const hr = require('hospitals-and-residents');
-const ordinal = require('ordinal')
+const ordinal = require('ordinal');
+const moment = require('moment');
 
 var NUMCHOICES;	// number of intensive choices allotted to students
 var PRIORITIZE_GRADE;	// whether or not grade priority is being factored into matching
@@ -95,7 +96,6 @@ module.exports = {
 							}
 
 							// convert association to list of intensive objects
-	
 							render.intensives = [];
 							for (var id in intensiveIDToObject) {
 								if (intensiveIDToObject.hasOwnProperty(id)) {
@@ -120,7 +120,25 @@ module.exports = {
 
 		// generate a new matching, re-render /match page
 		app.post('/newMatching', auth.isAdmin, function(req, res) {
-			// make sure to update lastMatching in system table
+			// generate new matching and write to matching table
+			module.exports.match(function(err) {
+				if (!err) {
+					// get and format the current time
+					var now = moment().format('MMMM Do YYYY, h:mm a');
+
+					// update time of last matching
+					con.query('UPDATE system SET value = ? WHERE name = ?;', [now, 'lastMatching'], function(err) {
+						if (!err) {
+							// show admin matching page with new match
+							res.redirect('/match');
+						} else {
+							res.render('error.html', { message: "Failed to update time of last matching." });
+						}
+					});
+				} else {
+					res.render('error.html', { message: "Failed to generate new matching." });
+				}
+			});
 		});
 
 		// reassign a student to a different intensive
@@ -272,4 +290,62 @@ module.exports = {
 		});
 	}
 
+}
+
+// debug: testing function to generate random preference data for all students in students table
+function generateRandomPreferencesForTestData(callback) {
+	// get system variables to determine number of choices to make for each student
+	system.getAllSystemVars(function(err, vars) {
+		if (!err) {
+			var numChoices = vars['numChoices'];
+			var intensiveUIDs = [];
+			var preferences = [];
+
+			// get intensive UID's 
+			con.query('SELECT uid FROM intensives;', function(err, rows) {
+				if (!err && rows !== undefined && rows.length > 0) {
+					for (var i = 0; i < rows.length; i++) {
+						intensiveUIDs.push(rows[i].uid);
+					}
+
+					// get student UIDs
+					con.query('SELECT uid FROM students;', function(err, rows) {
+						if (!err && rows !== undefined && rows.length > 0) {
+							// for each student
+							for (var i = 0; i < rows.length; i++) {
+								// copy the intensive UID's array
+								var copy = intensiveUIDs.slice();
+
+								// for each choice 
+								for (var n = 0; n < numChoices; n++) {
+									// choose random intensive, add to preferences
+									var rand = Math.floor(Math.random() * copy.length);
+									preferences.push([rows[i].uid, copy[rand], n]);
+									copy.splice(rand, 1);
+								}
+							}
+
+							// flush the existing preference data
+							con.query('DELETE FROM preferences;', function(err) {
+								if (!err) {
+									// insert preference data
+									con.query('INSERT INTO preferences (studentUID, intensiveUID, choice) VALUES ?;', [preferences], function(err) {
+										callback(err);
+									});
+								} else {
+									callback(err);
+								}
+							});
+						} else {
+							callback(err);
+						}
+					});
+				} else {
+					callback(err);
+				}
+			});
+		} else {
+			callback(err);
+		}
+	});
 }
