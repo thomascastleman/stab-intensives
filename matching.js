@@ -129,23 +129,47 @@ module.exports = {
 
 		// generate a new matching, re-render /match page
 		app.post('/newMatching', auth.isAdmin, function(req, res) {
-			// generate new matching and write to matching table
-			module.exports.match(function(err) {
-				if (!err) {
-					// get and format the current time
-					var now = moment().format('MMMM Do YYYY, h:mm a');
+			// check if intensives exist
+			con.query('SELECT COUNT(*) AS count FROM intensives;', function(err, rows) {
+				if (!err && rows !== undefined && rows.length > 0) {
+					// if intensives exist in db
+					if (rows[0].count > 0) {
+						// check if students exist
+						con.query('SELECT COUNT(*) AS count FROM students;', function(err, rows) {
+							if (!err && rows !== undefined && rows.length > 0) {
+								// if students exist as well
+								if (rows[0].count > 0) {
+									// generate new matching and write to matching table
+									module.exports.match(function(err) {
+										if (!err) {
+											// get and format the current time
+											var now = moment().format('MMMM Do YYYY, h:mm a');
 
-					// update time of last matching
-					con.query('UPDATE system SET value = ? WHERE name = ?;', [now, 'lastMatching'], function(err) {
-						if (!err) {
-							// show admin matching page with new match
-							res.redirect('/match');
-						} else {
-							res.render('error.html', { message: "Failed to update time of last matching." });
-						}
-					});
+											// update time of last matching
+											con.query('UPDATE system SET value = ? WHERE name = ?;', [now, 'lastMatching'], function(err) {
+												if (!err) {
+													// show admin matching page with new match
+													res.redirect('/match');
+												} else {
+													res.render('error.html', { message: "Failed to update time of last matching." });
+												}
+											});
+										} else {
+											res.render('error.html', { message: "Failed to generate new matching." });
+										}
+									});
+								} else {
+									res.render('error.html', { message: "You must upload student data before constructing a matching." });
+								}
+							} else {
+								res.render('error.html', { message: "An error occurred attempting to construct a new matching." });
+							}
+						});
+					} else {
+						res.render('error.html', { message: "You must upload intensive data before constructing a matching." });
+					}
 				} else {
-					res.render('error.html', { message: "Failed to generate new matching." });
+					res.render('error.html', { message: "An error occurred attempting to construct a new matching." });
 				}
 			});
 		});

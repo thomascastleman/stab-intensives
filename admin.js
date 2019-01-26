@@ -146,21 +146,16 @@ module.exports = {
 								render.choiceNumbers.push({ n: i, selected: i == render.variables.numChoices });
 							}
 
-							// if sign ups are out
-							if (render.variables.signUpsAvailable) {
-								// get sign up info of every registered student
-								con.query('SELECT name, DATE_FORMAT(lastSignUp, "%M %D %Y, %l:%i %p") AS lastSignUp, lastSignUp IS NOT NULL AS signUpStatus FROM students;', function(err, rows) {
-									if (!err && rows !== undefined && rows.length > 0) {
-										render.students = rows;
-									}
+							// get all info of every registered student
+							con.query('SELECT name, email, age, grade, DATE_FORMAT(lastSignUp, "%M %D %Y, %l:%i %p") AS lastSignUp, lastSignUp IS NOT NULL AS signUpStatus FROM students;', function(err, rows) {
+								if (!err && rows !== undefined && rows.length > 0) {
+									render.students = rows;
+									render.studentsExist = true;
+								}
 
-									// render admin portal
-									res.render('admin.html', render);
-								});
-							} else {
-								// render admin portal without signup info
+								// render admin portal
 								res.render('admin.html', render);
-							}
+							});
 						} else {
 							res.render('error.html', { message: "Unable to retrieve system parameters." });
 						}
@@ -231,13 +226,16 @@ module.exports = {
 								// remove all intensives data
 								con.query("DELETE FROM intensives;", function(succcc) {
 									// check if numChoices variable needs to be updated (it likely does now that everything's gone)
-									system.updateNumChoicesSystemVar(function(numChoices, err) {
-										// if an error occurred, render an error message
-										if (suc || succ || succc || succcc || err) {
-											res.render("error.html", {message: "Failed to remove all data."});
-										} else {
-											res.redirect('/admin');
-										}
+									system.updateNumChoicesSystemVar(function(numChoices, err1) {
+										// update time of last update, set to null
+										con.query('UPDATE system SET value = NULL WHERE name = ? OR name = ?;', ['studentCSVLastUpdate', 'lastMatching'], function(err2) {
+											// if an error occurred, render an error message
+											if (suc || succ || succc || succcc || err1 || err2) {
+												res.render("error.html", {message: "Failed to remove all data."});
+											} else {
+												res.redirect('/admin');
+											}
+										});
 									});
 								});		
 							});	
@@ -298,33 +296,6 @@ module.exports = {
 			} else {
 				res.render('error.html', { message: "Unable to update status of sign-ups due to null field."})
 			}
-		});
-
-		// allow admin to view table of all students who currently exist in system
-		app.get('/viewStudents', auth.restrictAdmin, function(req, res) {
-			var render = {};
-
-			// get all data from students table
-			con.query('SELECT * FROM students;', function(err, rows) {
-				if (!err && rows !== undefined) {
-					// register student data and existence of students in render object
-					render.students = rows;
-					render.studentsExist = rows.length > 0;
-
-					// get the time of last update of the student CSV file
-					system.getOneSystemVar('studentCSVLastUpdate', function(err, value) {
-						if (!err) {
-							// add last update date to page (assume already formatted)
-							render.lastUpdate = value;
-						}
-
-						// render page with student info
-						res.render('viewStudents.html', render);
-					});
-				} else {
-					res.render('error.html', { message: "Failed to retrieve student data." });
-				}
-			});
 		});
 
 	}
