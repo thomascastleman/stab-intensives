@@ -176,7 +176,13 @@ module.exports = {
 
 		// reassign a student to a different intensive
 		app.post('/reassign', auth.isAdmin, function(req, res) {
-
+			// if required fields exist
+			if (req.body.studentUID !== null && req.body.intensiveUID !== null) {
+				// apply update to matching
+				con.query('UPDATE matching SET intensiveUID = ? WHERE studentUID = ?;', [req.body.intensiveUID, req.body.studentUID], function(err) {
+					res.send(err);
+				});
+			}
 		});
 	},
 
