@@ -54,62 +54,71 @@ module.exports = {
 				if (!vars['signUpsAvailable']) {
 					var render = vars;
 
-					// get matching info from matching table
-					con.query('SELECT i.name AS intensiveName, i.uid AS intensiveUID, s.name AS studentName, s.uid AS studentUID, p.choice + 1 AS choice FROM intensives i LEFT JOIN matching m ON m.intensiveUID = i.uid LEFT JOIN students s ON m.studentUID = s.uid LEFT JOIN preferences p ON m.intensiveUID = p.intensiveUID AND m.studentUID = p.studentUID;', function(err, rows) {
-						if (!err && rows !== undefined) {
+					// check if any matching data exists
+					con.query('SELECT COUNT(*) AS count FROM matching;', function(err, rows) {
+						if (!err && rows !== undefined && rows.length > 0) {
+							// if matching exists
+							if (rows[0].count > 0) {
+								// get matching info from matching table
+								con.query('SELECT i.name AS intensiveName, i.uid AS intensiveUID, s.name AS studentName, s.uid AS studentUID, p.choice + 1 AS choice FROM intensives i LEFT JOIN matching m ON m.intensiveUID = i.uid LEFT JOIN students s ON m.studentUID = s.uid LEFT JOIN preferences p ON m.intensiveUID = p.intensiveUID AND m.studentUID = p.studentUID;', function(err, rows) {
+									if (!err && rows !== undefined) {
 
-							var intensiveIDToObject = {};
+										var intensiveIDToObject = {};
 
-							// for each row returned
-							for (var i = 0; i < rows.length; i++) {
-								var intUID = rows[i].intensiveUID;
+										// for each row returned
+										for (var i = 0; i < rows.length; i++) {
+											var intUID = rows[i].intensiveUID;
 
-								// if no existing object for this intensive yet
-								if (intensiveIDToObject[intUID] == null) {
-									// create an object to store this intensive's data
-									intensiveIDToObject[intUID] = {
-										intensiveUID: intUID,
-										intensiveName: rows[i].intensiveName,
-										students: []
-									};
-								}
+											// if no existing object for this intensive yet
+											if (intensiveIDToObject[intUID] == null) {
+												// create an object to store this intensive's data
+												intensiveIDToObject[intUID] = {
+													intensiveUID: intUID,
+													intensiveName: rows[i].intensiveName,
+													students: []
+												};
+											}
 
-								// if this row represents an assignment between student and intensive
-								if (rows[i].studentUID != null) {
-									// format choice
-									if (rows[i].choice == null) {
-										rows[i].choice = 'Arbitrary';
+											// if this row represents an assignment between student and intensive
+											if (rows[i].studentUID != null) {
+												// format choice
+												if (rows[i].choice == null) {
+													rows[i].choice = 'Arbitrary';
+												} else {
+													rows[i].choice = ordinal(rows[i].choice);
+												}
+
+												// construct student object
+												var stu = {
+													studentUID: rows[i].studentUID, 
+													studentName: rows[i].studentName, 
+													choice: rows[i].choice
+												}
+
+												// add student object to intensive object
+												intensiveIDToObject[intUID].students.push(stu);
+											}
+										}
+
+										// convert association to list of intensive objects
+										render.intensives = [];
+										for (var id in intensiveIDToObject) {
+											if (intensiveIDToObject.hasOwnProperty(id)) {
+												render.intensives.push(intensiveIDToObject[id]);
+											}
+										}
+
+										res.render('match.html', render);
 									} else {
-										rows[i].choice = ordinal(rows[i].choice);
+										res.render('error.html', { message: "Unable to load matching." });
 									}
-
-									// construct student object
-									var stu = {
-										studentUID: rows[i].studentUID, 
-										studentName: rows[i].studentName, 
-										choice: rows[i].choice
-									}
-
-									// add student object to intensive object
-									intensiveIDToObject[intUID].students.push(stu);
-								}
-							}
-
-							// convert association to list of intensive objects
-							render.intensives = [];
-							for (var id in intensiveIDToObject) {
-								if (intensiveIDToObject.hasOwnProperty(id)) {
-									render.intensives.push(intensiveIDToObject[id]);
-								}
-							}
-
-							// register if no matching has yet been generated
-							if (render.intensives.length == 0)
+								});
+							} else {
 								render.noMatching = true;
-
-							res.render('match.html', render);
+								res.render('match.html', render);
+							}
 						} else {
-							res.render('error.html', { message: "Unable to load matching." });
+							res.render('error.html', { message: "Unable to retrieve matching data." });
 						}
 					});
 				} else {

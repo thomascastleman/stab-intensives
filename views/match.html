@@ -35,38 +35,40 @@
 		</select>
 	</form>
 
-	<h3>Analysis</h3>
-	<p>Nothing to show here currently (debug)</p>
-
-	<h3>Assignments</h3>
-
 	{{#noMatching}}
-	<p>It appears a matching has yet to be constructed.</p>
+		<p>It appears a matching has yet to be constructed.</p>
 	{{/noMatching}}
-	{{#intensives}}
-	<h4>{{intensiveName}}</h4>
-	<table>
-		{{#students}}
-		<tr>
-			<td>{{studentName}}</td>
-			<td>{{choice}}</td>
-<!-- 			<td>
-				<select onchange="reassign({{studentUID}}, this.value);">
-					{{#intensives}}
-					<option value="{{intensiveUID}}">{{intensiveName}}</option>
-					{{/intensives}}
-				</select>
-			</td> -->
-		</tr>
-		{{/students}}
-	</table>
-	<br>
-	{{/intensives}}
 
-	<h3>Download</h3>
+	{{^noMatching}}
+		<h3>Analysis</h3>
+		<p>Nothing to show here currently (debug)</p>
 
-	<form action="/downloadMatching" method="GET">
-		<button type="submit">Download CSV</button>
-	</form>
+		<h3>Assignments</h3>
+		{{#intensives}}
+		<h4>{{intensiveName}}</h4>
+		<table>
+			{{#students}}
+			<tr>
+				<td>{{studentName}}</td>
+				<td>{{choice}}</td>
+	<!-- 			<td>
+					<select onchange="reassign({{studentUID}}, this.value);">
+						{{#intensives}}
+						<option value="{{intensiveUID}}">{{intensiveName}}</option>
+						{{/intensives}}
+					</select>
+				</td> -->
+			</tr>
+			{{/students}}
+		</table>
+		<br>
+		{{/intensives}}
+
+		<h3>Download</h3>
+
+		<form action="/downloadMatching" method="GET">
+			<button type="submit">Download CSV</button>
+		</form>
+	{{/noMatching}}
 </body>
 </html>
