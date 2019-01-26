@@ -3,6 +3,7 @@ var con = require('./database.js').connection;
 var auth = require('./auth.js');
 var creds = require('./credentials.js');
 var system = require('./system.js');
+var moment = require('moment');
 
 module.exports = {
 	init: function(app) {
@@ -75,7 +76,16 @@ module.exports = {
 								if (!err) {
 									// insert preferences into preference table
 									con.query('INSERT INTO preferences (studentUID, intensiveUID, choice) VALUES ?;', [insertChoices], function(err) {
-										res.send({ error: err != null });
+										if (!err) {
+											var now = moment().format('YYYY-MM-DD HH:mm:ss');
+
+											// update last sign in date for student
+											con.query('UPDATE students SET lastSignUp = ? WHERE uid = ?;', [now, studentUID], function(err) {
+												res.send({ error: err != null });
+											});
+										} else {
+											res.send({ error: err != null });
+										}
 									});
 								} else {
 									res.send({ error: err != null });

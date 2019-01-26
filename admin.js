@@ -98,7 +98,6 @@ module.exports = {
 					for (var i = 0; i < fileRows.length; i ++){
 						fileRows[i].shift()
 						fileRows[i][2] = fileRows[i][2].match(/\d+/)[0];
-								//console.log(fileRows[i][3].match(/\d+/))
 					}
 
 					// ensure intensives table is clear
@@ -150,7 +149,7 @@ module.exports = {
 							// if sign ups are out
 							if (render.variables.signUpsAvailable) {
 								// get sign up info of every registered student
-								con.query('SELECT name, lastSignUp, lastSignUp IS NOT NULL AS signUpStatus FROM students;', function(err, rows) {
+								con.query('SELECT name, DATE_FORMAT(lastSignUp, "%M %D %Y, %l:%i %p") AS lastSignUp, lastSignUp IS NOT NULL AS signUpStatus FROM students;', function(err, rows) {
 									if (!err && rows !== undefined && rows.length > 0) {
 										render.students = rows;
 									}
