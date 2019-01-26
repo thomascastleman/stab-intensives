@@ -86,7 +86,7 @@ module.exports = {
 						}
 					});
 				} else {
-					res.send({ admin: true });
+					res.send({ error: true, admin: true });
 				}
 			} else {
 				res.send("No choices specified in request.");
