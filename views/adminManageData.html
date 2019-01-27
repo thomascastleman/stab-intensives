@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Administrator Portal</title>
+</head>
+<body>
+	<ul>
+		<li><a href="/admin">Administrator Portal</a></li>
+		<li><a href="/intensives">Intensives</a></li>
+		<li><a href="/students">Students</a></li>
+		<li><a href="/match">Matching</a></li>
+		<li><a href="/manageData">Manage Data</a></li>
+	</ul>
+
+	<h1>Clear Intensive / Student Data</h1>
+	{{^variables.signUpsAvailable}}
+		<a href="/wipeAllData" onclick="return confirm('Are you sure you want to erase all student and intensive data?');">Reset All Data</a>
+	{{/variables.signUpsAvailable}}
+
+	{{#variables.signUpsAvailable}}
+		<p>You must close the student sign-up before erasing all data.</p>
+	{{/variables.signUpsAvailable}}
+</body>
+</html>

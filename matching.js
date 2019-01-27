@@ -108,21 +108,21 @@ module.exports = {
 											}
 										}
 
-										res.render('match.html', render);
+										res.render('adminMatch.html', render);
 									} else {
 										res.render('error.html', { message: "Unable to load matching." });
 									}
 								});
 							} else {
 								render.noMatching = true;
-								res.render('match.html', render);
+								res.render('adminMatch.html', render);
 							}
 						} else {
 							res.render('error.html', { message: "Unable to retrieve matching data." });
 						}
 					});
 				} else {
-					res.render('error.html', { message: "Sign-ups must be closed before a matching can be generated." });
+					res.render('adminMatch.html', { unableToMatch: true });
 				}
 			});
 		});
@@ -183,6 +183,11 @@ module.exports = {
 					res.send(err);
 				});
 			}
+		});
+
+		// download a CSV file of the matching currently in matching table
+		app.get('/downloadMatching', auth.restrictAdmin, function(req, res) {
+			// todo
 		});
 	},
 
@@ -388,3 +393,5 @@ function generateRandomPreferencesForTestData(callback) {
 		}
 	});
 }
+
+// generateRandomPreferencesForTestData(function(err) { console.log(err); });

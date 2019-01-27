@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Administrator Portal</title>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js"></script>
+	<script>
+		// track number of intensives in table
+		var numIntensives = {{numIntensives}};
+
+		// remove an intensive by UID
+		function removeIntensive(uid, name) {
+			if (confirm("Are you sure you want to remove the intensive '" + name + "'?")) {
+				$.post('/deleteIntensive', { uid: uid })
+					.done(function(data) {
+						// if no error, remove intensive table element
+						if (!data.err) {
+							$('#intensive' + uid).remove();
+							numIntensives--;
+						} else {
+							alert("Failed to remove intensive.");
+						}
+
+						// if number of student choices has been forcibly updated, reload page to show changes
+						if (data.numChoices || numIntensives < 1)
+							window.location.href = "/intensives";	// reload page
+					});
+			}
+		}
+
+		// check if all fields are filled in for a new intensive
+		function confirmNewIntensive(form) {
+			if (form.name.value == '' || form.maxCapacity.value == '') {
+				alert("You must fill in all fields before submitting a new intensive.");
+				return false;
+			} else {
+				return true;
+			}
+		}
+	</script>
+</head>
+<body>
+	<ul>
+		<li><a href="/admin">Administrator Portal</a></li>
+		<li><a href="/intensives">Intensives</a></li>
+		<li><a href="/students">Students</a></li>
+		<li><a href="/match">Matching</a></li>
+		<li><a href="/manageData">Manage Data</a></li>
+	</ul>
+
+	<h1>Intensives</h1>
+	{{#variables.signUpsAvailable}}
+		<p>While student sign-ups are live, you can only <strong>add</strong> new intensives. To delete an intensive or replace the existing intensive data with a new CSV upload, first close the sign-up.</p>
+	{{/variables.signUpsAvailable}}
+	{{^variables.signUpsAvailable}}
+	
+	<form action="/uploadIntensiveCSV" method="POST" enctype="multipart/form-data">
+	    Upload Intensives CSV
+	    <input type="file" name="file" id="input">
+	    <input type="submit" value="Upload Intensives CSV " name="submit" onclick="return confirm('Are you sure you want to upload an intensives file? It will clear the existing intensive data');">
+	</form>
+	{{/variables.signUpsAvailable}}
+	<table>
+		<tr>
+			<th>Name</th>
+			<th>Capacity</th>
+			<th>Minimum Grade</th>
+			<th>Minimum Age</th>
+		</tr>
+		{{#intensives}}
+		<tr id="intensive{{uid}}">
+			<td>{{name}}</td>
+			<td>{{maxCapacity}}</td>
+			<td>{{minGrade}}</td>
+			<td>{{minAge}}</td>
+			{{^variables.signUpsAvailable}}
+				<td><button onclick="removeIntensive({{uid}}, '{{name}}');">Delete</button></td>
+			{{/variables.signUpsAvailable}}
+		</tr>
+		{{/intensives}}
+		<form action="/createIntensive" method="POST">
+			<tr>
+				<td><input name="name" type="text" autocomplete="off" placeholder="Enter Name"></td>
+				<td><input name="maxCapacity" type="text" autocomplete="off" placeholder="Enter Max Capacity"></td>
+				<td>
+					<select name="minGrade">
+						<option value="9">None</option>
+						<option value="10">10</option>
+						<option value="11">11</option>
+						<option value="12">12</option>
+					</select>
+				</td>
+				<td>
+					<select name="minAge">
+						<option value="0">None</option>
+						<option value="14">14</option>
+						<option value="15">15</option>
+						<option value="16">16</option>
+						<option value="17">17</option>
+						<option value="18">18</option>
+						<option value="19">19</option>
+					</select>
+				</td>
+				<td><button type="submit" onclick="return confirmNewIntensive(this.form);">Add</button></td>
+			</tr>
+		</form>
+	</table>
+</body>
+</html>

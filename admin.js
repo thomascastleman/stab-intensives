@@ -63,7 +63,7 @@ module.exports = {
 											// set last update on student CSV to current time
 											con.query('UPDATE system SET value = ? WHERE name = ?;', [now, 'studentCSVLastUpdate'], function(err) {
 												if (!err) {
-													res.redirect('/admin');
+													res.redirect('/students');
 												} else {
 													res.render('error.html', { message: "Failed to register time of last update." });
 												}
@@ -118,7 +118,7 @@ module.exports = {
 									// batch insert intensive data into intensives table
 									con.query('INSERT INTO intensives (name, maxCapacity, minGrade, minAge) VALUES ?;', [fileRows], function(err) {
 										if (!err) {
-											res.redirect('/admin');
+											res.redirect('/intensives');
 										} else {
 											res.render('error.html', { message: "Failed to upload intensives to database." });
 										}
@@ -134,9 +134,14 @@ module.exports = {
 			}
 		});
 
-		// render admin portal
+		// show main tab of admin portal
 		app.get('/admin', auth.restrictAdmin, function(req, res) {
-			var render = { domain: creds.domain };
+			res.render('admin.html', { adminName: req.user.name.givenName });
+		});
+
+		// show tab for managing intensive data in admin portal
+		app.get('/intensives', auth.restrictAdmin, function(req, res) {
+			var render = {};
 
 			// get all intensives recorded in db
 			con.query('SELECT uid, name, maxCapacity, IF(minGrade = 9, "None", minGrade) AS minGrade, IF(minAge = 0, "None", minAge) AS minAge FROM intensives;', function(err, rows) {
@@ -152,9 +157,37 @@ module.exports = {
 							// add system variables to render object
 							render.variables = vars;
 
+							// render page
+							res.render('adminIntensives.html', render);
+						} else {
+							res.render('error.html', { message: "Unable to retrieve system parameters." });
+						}
+					});
+				} else {
+					res.render('error.html', { message: "Unable to gather intensives info." });
+				}
+			});
+		});
+
+		// show tab for managing student data in admin portal
+		app.get('/students', auth.restrictAdmin, function(req, res) {
+			var render = { domain: creds.domain };
+
+			// get all intensives recorded in db
+			con.query('SELECT COUNT(*) AS count FROM intensives;', function(err, rows) {
+				if (!err && rows !== undefined && rows.length > 0) {
+					// register if intensives exist
+					render.intensivesExist = rows[0].count > 0;
+
+					// get the system variables
+					system.getAllSystemVars(function(err, vars) {
+						if (!err) {
+							// add system variables to render object
+							render.variables = vars;
+
 							// get list of possible states for numChoices variable
 							render.choiceNumbers = [];
-							for (var i = 1; i <= render.intensives.length; i++) {
+							for (var i = 1; i <= rows[0].count; i++) {
 								render.choiceNumbers.push({ n: i, selected: i == render.variables.numChoices });
 							}
 
@@ -166,7 +199,7 @@ module.exports = {
 								}
 
 								// render admin portal
-								res.render('admin.html', render);
+								res.render('adminStudents.html', render);
 							});
 						} else {
 							res.render('error.html', { message: "Unable to retrieve system parameters." });
@@ -174,6 +207,24 @@ module.exports = {
 					});
 				} else {
 					res.render('error.html', { message: "Unable to gather intensives info." });
+				}
+			});
+		});
+
+		// show tab for managing data in admin portal
+		app.get('/manageData', auth.restrictAdmin, function(req, res) {
+			// get the system variables
+			system.getAllSystemVars(function(err, vars) {
+				if (!err) {
+					// add system variables to render object
+					var render = {
+						variables: vars
+					};
+
+					// render data management tab
+					res.render('adminManageData.html', render);
+				} else {
+					res.render('error.html', { message: "Unable to retrieve system parameters." });
 				}
 			});
 		});
@@ -190,7 +241,7 @@ module.exports = {
 					// insert intensive into database
 					con.query('INSERT INTO intensives (name, maxCapacity, minGrade, minAge) VALUES (?, ?, ?, ?);', [req.body.name, req.body.maxCapacity, req.body.minGrade, req.body.minAge], function(err) {
 						if (!err) {
-							res.redirect('/admin');
+							res.redirect('/intensives');
 						} else {
 							res.render('error.html', { message: "There was an error adding the intensive to the database." });
 						}
@@ -266,7 +317,7 @@ module.exports = {
 				// update system variable
 				con.query('UPDATE system SET value = ? WHERE name = ?;', [req.body.numChoices, "numChoices"], function(err) {
 					if (!err) {
-						res.redirect('/admin');
+						res.redirect('/students');
 					} else {
 						res.render('error.html', { message: "Unable to update number of student choices." });
 					}
@@ -300,7 +351,7 @@ module.exports = {
 				// update system variable
 				con.query('UPDATE system SET value = ? WHERE name = ?;', [req.body.signUpsAvailable, "signUpsAvailable"], function(err) {
 					if (!err) {
-						res.redirect('/admin');
+						res.redirect('/students');
 					} else {
 						res.render('error.html', { message: "Unable to update status of sign-ups." });
 					}
