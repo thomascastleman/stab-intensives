@@ -60,7 +60,7 @@ module.exports = {
 							// if matching exists
 							if (rows[0].count > 0) {
 								// get matching info from matching table
-								con.query('SELECT i.name AS intensiveName, i.uid AS intensiveUID, s.name AS studentName, s.uid AS studentUID, p.choice + 1 AS choice FROM intensives i LEFT JOIN matching m ON m.intensiveUID = i.uid LEFT JOIN students s ON m.studentUID = s.uid LEFT JOIN preferences p ON m.intensiveUID = p.intensiveUID AND m.studentUID = p.studentUID;', function(err, rows) {
+								con.query('SELECT i.name AS intensiveName, i.uid AS intensiveUID, s.age, s.grade, s.name AS studentName, s.uid AS studentUID, p.choice + 1 AS choice FROM intensives i LEFT JOIN matching m ON m.intensiveUID = i.uid LEFT JOIN students s ON m.studentUID = s.uid LEFT JOIN preferences p ON m.intensiveUID = p.intensiveUID AND m.studentUID = p.studentUID;', function(err, rows) {
 									if (!err && rows !== undefined) {
 
 										var intensiveIDToObject = {};
@@ -91,7 +91,9 @@ module.exports = {
 												// construct student object
 												var stu = {
 													studentUID: rows[i].studentUID, 
-													studentName: rows[i].studentName, 
+													studentName: rows[i].studentName,
+													studentGrade: rows[i].grade,
+													studentAge: rows[i].age,
 													choice: rows[i].choice
 												}
 

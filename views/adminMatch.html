@@ -9,7 +9,7 @@
 			$.post('/reassign', { studentUID: studentUID, intensiveUID: intensiveUID })
 				.done(function(err) {
 					if (!err) {
-						window.location.href = "/match";
+						document.location.reload(true);
 					} else {
 						alert('Unable to move student.');
 					}
@@ -56,17 +56,25 @@
 			{{#intensives}}
 			<h4>{{intensiveName}}</h4>
 			<table>
+				<tr>
+					<th>Name</th>
+					<th>Grade</th>
+					<th>Age</th>
+					<th>Choice</th>
+				</tr>
 				{{#students}}
 				<tr>
 					<td>{{studentName}}</td>
+					<td>{{studentGrade}}th</td>
+					<td>({{studentAge}})</td>
 					<td>{{choice}}</td>
-	<!-- 				<td>
+					<td>
 						<select onchange="reassign({{studentUID}}, this.value);">
 							{{#intensives}}
 							<option value="{{intensiveUID}}">{{intensiveName}}</option>
 							{{/intensives}}
 						</select>
-					</td> -->
+					</td>
 				</tr>
 				{{/students}}
 			</table>
