@@ -57,8 +57,8 @@ module.exports = {
 
 		// authentication with google endpoint
 		app.get('/auth/google', module.exports.checkReturnTo, passport.authenticate('google', { scope: [
-				'https://www.googleapis.com/auth/userinfo.profile',
-				'https://www.googleapis.com/auth/userinfo.email'
+				'profile',
+				'email'
 			]
 		}));
 
